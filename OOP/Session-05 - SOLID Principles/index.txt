@@ -1,0 +1,15 @@
+Payment Manager(){
+    pay(modify this code) XXXXXX
+}
+
+Bkash:Payment Manager
+Rocket:Payment Manager
+Nagad:Payment Manager
+CashPay:Payment Manager
+TiyaPay:Payment Manager
+
+
+Order Class 
+Product name
+product quantity
+product price
