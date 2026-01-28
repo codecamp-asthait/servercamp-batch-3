@@ -54,3 +54,7 @@ It merges two factory patterns into one.
 In such case, you need abstract factory!
 
 **Note**: These might be hard for students, but don't get afraid! Not required for entry level that much.
+
+## Practice Assignment
+
+- [Practice Assignment](./practice-assignment.md)
