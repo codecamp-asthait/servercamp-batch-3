@@ -1,0 +1,79 @@
+{
+  "version": 2,
+  "dgSpecHash": "k23sbg4B6rg=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Abdullah Rayed\\Desktop\\OOP SQL Project\\CoffeeShopSystem.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\azure.core\\1.35.0\\azure.core.1.35.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\azure.identity\\1.10.3\\azure.identity.1.10.3.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\1.1.1\\microsoft.bcl.asyncinterfaces.1.1.1.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\microsoft.data.sqlclient\\5.2.0\\microsoft.data.sqlclient.5.2.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\microsoft.data.sqlclient.sni.runtime\\5.2.0\\microsoft.data.sqlclient.sni.runtime.5.2.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\microsoft.identity.client\\4.56.0\\microsoft.identity.client.4.56.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\microsoft.identity.client.extensions.msal\\4.56.0\\microsoft.identity.client.extensions.msal.4.56.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\microsoft.identitymodel.abstractions\\6.35.0\\microsoft.identitymodel.abstractions.6.35.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\microsoft.identitymodel.jsonwebtokens\\6.35.0\\microsoft.identitymodel.jsonwebtokens.6.35.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\microsoft.identitymodel.logging\\6.35.0\\microsoft.identitymodel.logging.6.35.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\microsoft.identitymodel.protocols\\6.35.0\\microsoft.identitymodel.protocols.6.35.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\microsoft.identitymodel.protocols.openidconnect\\6.35.0\\microsoft.identitymodel.protocols.openidconnect.6.35.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\microsoft.identitymodel.tokens\\6.35.0\\microsoft.identitymodel.tokens.6.35.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\microsoft.sqlserver.server\\1.0.0\\microsoft.sqlserver.server.1.0.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\system.configuration.configurationmanager\\8.0.0\\system.configuration.configurationmanager.8.0.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\system.diagnostics.eventlog\\8.0.0\\system.diagnostics.eventlog.8.0.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\system.identitymodel.tokens.jwt\\6.35.0\\system.identitymodel.tokens.jwt.6.35.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\system.io.filesystem.accesscontrol\\5.0.0\\system.io.filesystem.accesscontrol.5.0.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\system.memory.data\\1.0.2\\system.memory.data.1.0.2.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\system.runtime.caching\\8.0.0\\system.runtime.caching.8.0.0.nupkg.sha512",
+    "C:\\Users\\Abdullah Rayed\\.nuget\\packages\\system.security.cryptography.protecteddata\\8.0.0\\system.security.cryptography.protecteddata.8.0.0.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Azure.Identity' 1.10.3 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-m5vv-6r4h-3vj9",
+      "projectPath": "C:\\Users\\Abdullah Rayed\\Desktop\\OOP SQL Project\\CoffeeShopSystem.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\Abdullah Rayed\\Desktop\\OOP SQL Project\\CoffeeShopSystem.csproj",
+      "libraryId": "Azure.Identity",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Azure.Identity' 1.10.3 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-wvxc-855f-jvrv",
+      "projectPath": "C:\\Users\\Abdullah Rayed\\Desktop\\OOP SQL Project\\CoffeeShopSystem.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\Abdullah Rayed\\Desktop\\OOP SQL Project\\CoffeeShopSystem.csproj",
+      "libraryId": "Azure.Identity",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'Microsoft.Identity.Client' 4.56.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-m5vv-6r4h-3vj9",
+      "projectPath": "C:\\Users\\Abdullah Rayed\\Desktop\\OOP SQL Project\\CoffeeShopSystem.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\Abdullah Rayed\\Desktop\\OOP SQL Project\\CoffeeShopSystem.csproj",
+      "libraryId": "Microsoft.Identity.Client",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1901",
+      "level": "Warning",
+      "message": "Package 'Microsoft.Identity.Client' 4.56.0 has a known low severity vulnerability, https://github.com/advisories/GHSA-x674-v45j-fwxw",
+      "projectPath": "C:\\Users\\Abdullah Rayed\\Desktop\\OOP SQL Project\\CoffeeShopSystem.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\Abdullah Rayed\\Desktop\\OOP SQL Project\\CoffeeShopSystem.csproj",
+      "libraryId": "Microsoft.Identity.Client",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
+}
