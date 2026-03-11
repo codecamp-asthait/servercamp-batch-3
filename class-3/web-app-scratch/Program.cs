@@ -1,12 +1,12 @@
-﻿// create a router
-var router = new Router();
+﻿// create the builder
+var builder = WebApplicationFactory.CreateBuilder();
+builder.Services.AddControllers();
 
-// register the router
-router.MapGet("/user", (ctx) => $"Fetching user from route: {ctx.Path}");
-router.MapPost("/user", (ctx) => $"Creating user at route: {ctx.Path}");
+// build the app
+var app = builder.Build();
+app.MapControllers();
 
-// create server
-var server = new TcpServer(5005, router);
+app.MapGet("/codecamp", (ctx) => $"We are codecamp batch 3. Response is generated from route: {ctx.Path}");
 
 // run the server
-await server.StartAsync();
+await app.RunAsync(5005);
