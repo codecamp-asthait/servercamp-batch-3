@@ -2,89 +2,96 @@ using System.Net;
 using System.Text;
 using System.Net.Sockets;
 
-// A custom data structure to represent the HTTP request information,
-// similar to .NET's HttpContext but much simpler.
-class RequestContext
+// A simple class that represents the HTTP request context.
+// Similar to ASP.NET's HttpContext but extremely simplified.
+// It only stores the HTTP method and the request path.
+public class RequestContext
 {
-    public string Method { get; set; } = string.Empty; // GET, POST, etc.
-    public string Path { get; set; } = string.Empty;   // The requested path, e.g., /hello
+    // HTTP method (GET, POST, etc.)
+    public string Method { get; set; } = string.Empty;
+
+    // Requested URL path (e.g., /hello)
+    public string Path { get; set; } = string.Empty;
 }
 
-// TCP server class that listens for incoming TCP connections
-class TcpServer
+// TCP server responsible for listening to incoming connections
+// and forwarding requests to the Router.
+public class TcpServer(int port, Router router)
 {
-    private readonly int _port; // Port number where the server will listen
+    // Port where the server will listen
+    private readonly int _port = port;
 
-    // Constructor to initialize the server with a specific port
-    public TcpServer(int port)
-    {
-        _port = port;
-    }
+    // Router instance used to resolve incoming requests
+    // to the correct handler.
+    private readonly Router _router = router;
 
-    // Method to start the TCP server asynchronously
+    // Starts the TCP server and begins listening for clients
     public async Task StartAsync()
     {
-        // Create a TCP listener bound to localhost (127.0.0.1) on the specified port
+        // Create a TCP listener bound to localhost
         var listener = new TcpListener(IPAddress.Loopback, _port);
-        listener.Start(); // Start listening for incoming connections
+
+        // Start listening for incoming connections
+        listener.Start();
+
         Console.WriteLine($"Server started on port {_port}");
 
-        // Infinite loop to continuously accept new clients
+        // Infinite loop to accept clients continuously
         while (true)
         {
-            // Accept a new client asynchronously
+            // Wait asynchronously for a new client connection
             var client = await listener.AcceptTcpClientAsync();
 
-            // Handle the client connection in a background task so
-            // the server can immediately accept other clients
+            // Handle the client in a background task so
+            // the server can keep accepting new connections
             _ = Task.Run(() => HandleClient(client));
         }
     }
 
-    // Method to handle a single client connection
+    // Handles a single client connection
     private async Task HandleClient(TcpClient client)
     {
         // Get the network stream to read/write data
         using var stream = client.GetStream();
 
-        // Create a buffer to hold incoming bytes (max 1024 bytes at a time)
+        // Buffer to store incoming bytes
         var buffer = new byte[1024];
 
-        // Read data from the client into the buffer asynchronously
+        // Read incoming request data
         var byteCount = await stream.ReadAsync(buffer);
 
-        // Convert the bytes to a string using UTF-8 encoding
+        // Convert the received bytes to a string
         var requestText = Encoding.UTF8.GetString(buffer, 0, byteCount);
 
-        // Naive parsing of HTTP request:
-        // Split the request into lines by CRLF
+        // Very naive HTTP parsing
+        // Example first line: "GET /path HTTP/1.1"
         var lines = requestText.Split("\r\n");
 
-        // The first line is usually like: "GET /path HTTP/1.1"
+        // Extract request line parts
         var requestLine = lines[0].Split(' ');
 
-        // Create a RequestContext object to store method and path
+        // Build the RequestContext object
         var context = new RequestContext
         {
-            Method = requestLine[0],
-            Path = requestLine[1]
+            Method = requestLine[0], // GET, POST etc.
+            Path = requestLine[1]    // Requested route
         };
 
-        // Create a simple response that just echoes the requested path
-        var responseText = $"You requested {context.Path}";
+        // Ask the router to resolve the request and return a response
+        var responseText = _router.Resolve(context);
 
-        // Convert the response to bytes
-        // Include basic HTTP response headers
+        // Construct a minimal HTTP response
         var responseBytes = Encoding.UTF8.GetBytes(
-            "HTTP/1.1 200 OK\r\n" +
-            "Content-Length: " + responseText.Length + "\r\n\r\n" +
+            "HTTP/1.1 200 OK\r\nContent-Length: " +
+            responseText.Length +
+            "\r\n\r\n" +
             responseText
         );
 
-        // Send the response back to the client
+        // Send response back to the client
         await stream.WriteAsync(responseBytes);
 
-        // Close the connection after sending the response
+        // Close the connection
         client.Close();
     }
 }
