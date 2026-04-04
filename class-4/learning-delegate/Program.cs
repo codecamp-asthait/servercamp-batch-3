@@ -1,0 +1,2 @@
+﻿Delegate.Explanation();
+Event.Explanation();
