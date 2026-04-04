@@ -1,0 +1,15 @@
+/home/shafayet-maruf/new-work/CodeCamp/servercamp-batch-3/class-4/learning-delegate/bin/Debug/net10.0/learning-delegate
+/home/shafayet-maruf/new-work/CodeCamp/servercamp-batch-3/class-4/learning-delegate/bin/Debug/net10.0/learning-delegate.deps.json
+/home/shafayet-maruf/new-work/CodeCamp/servercamp-batch-3/class-4/learning-delegate/bin/Debug/net10.0/learning-delegate.runtimeconfig.json
+/home/shafayet-maruf/new-work/CodeCamp/servercamp-batch-3/class-4/learning-delegate/bin/Debug/net10.0/learning-delegate.dll
+/home/shafayet-maruf/new-work/CodeCamp/servercamp-batch-3/class-4/learning-delegate/bin/Debug/net10.0/learning-delegate.pdb
+/home/shafayet-maruf/new-work/CodeCamp/servercamp-batch-3/class-4/learning-delegate/obj/Debug/net10.0/learning-delegate.GeneratedMSBuildEditorConfig.editorconfig
+/home/shafayet-maruf/new-work/CodeCamp/servercamp-batch-3/class-4/learning-delegate/obj/Debug/net10.0/learning-delegate.AssemblyInfoInputs.cache
+/home/shafayet-maruf/new-work/CodeCamp/servercamp-batch-3/class-4/learning-delegate/obj/Debug/net10.0/learning-delegate.AssemblyInfo.cs
+/home/shafayet-maruf/new-work/CodeCamp/servercamp-batch-3/class-4/learning-delegate/obj/Debug/net10.0/learning-delegate.csproj.CoreCompileInputs.cache
+/home/shafayet-maruf/new-work/CodeCamp/servercamp-batch-3/class-4/learning-delegate/obj/Debug/net10.0/learning-delegate.sourcelink.json
+/home/shafayet-maruf/new-work/CodeCamp/servercamp-batch-3/class-4/learning-delegate/obj/Debug/net10.0/learning-delegate.dll
+/home/shafayet-maruf/new-work/CodeCamp/servercamp-batch-3/class-4/learning-delegate/obj/Debug/net10.0/refint/learning-delegate.dll
+/home/shafayet-maruf/new-work/CodeCamp/servercamp-batch-3/class-4/learning-delegate/obj/Debug/net10.0/learning-delegate.pdb
+/home/shafayet-maruf/new-work/CodeCamp/servercamp-batch-3/class-4/learning-delegate/obj/Debug/net10.0/learning-delegate.genruntimeconfig.cache
+/home/shafayet-maruf/new-work/CodeCamp/servercamp-batch-3/class-4/learning-delegate/obj/Debug/net10.0/ref/learning-delegate.dll
