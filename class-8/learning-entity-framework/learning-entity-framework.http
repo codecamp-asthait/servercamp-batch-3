@@ -1,0 +1,6 @@
+@learning_entity_framework_HostAddress = http://localhost:5003
+
+GET {{learning_entity_framework_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
