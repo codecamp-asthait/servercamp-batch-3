@@ -1,0 +1,10 @@
+// install postgres provider
+dotnet add package Npgsql
+
+// create todo table
+CREATE TABLE todos (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(200) NOT NULL,
+    is_completed BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
