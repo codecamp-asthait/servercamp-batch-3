@@ -2,7 +2,14 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = "Host=localhost;Port=5433;Username=postgres;Password=postgres;Database=codecamp_db";
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options.UseNpgsql(connectionString);
+    options.AddInterceptors(
+        new SaveChangesTimingInterceptor(),
+        new QueryLoggingInterceptor()
+    );
+});
 
 var app = builder.Build();
 
@@ -20,10 +27,10 @@ app.MapPost("/user", async (AppDbContext context, UserRequest req) =>
             EntityName = e.Entity.GetType().Name,
             State = e.State.ToString()
         });
-    
+
     Console.WriteLine();
     Console.WriteLine($"entriesBeforeAdd");
-    foreach(var entry in entriesBeforeAdd)
+    foreach (var entry in entriesBeforeAdd)
     {
         Console.WriteLine($"Entity: {entry.EntityName}");
         Console.WriteLine($"State: {entry.State}");
@@ -39,17 +46,17 @@ app.MapPost("/user", async (AppDbContext context, UserRequest req) =>
             EntityName = e.Entity.GetType().Name,
             State = e.State.ToString()
         });
-    
+
 
     Console.WriteLine();
     Console.WriteLine($"entriesAfterAdd");
-    foreach(var entry in entriesAfterAdd)
+    foreach (var entry in entriesAfterAdd)
     {
         Console.WriteLine($"Entity: {entry.EntityName}");
         Console.WriteLine($"State: {entry.State}");
         Console.WriteLine("--------------------------------------------");
     }
-        
+
 
     await context.SaveChangesAsync();
 
@@ -62,7 +69,7 @@ app.MapPost("/user", async (AppDbContext context, UserRequest req) =>
 
     Console.WriteLine();
     Console.WriteLine($"entriesAfterSaveChange");
-    foreach(var entry in entriesAfterSaveChange)
+    foreach (var entry in entriesAfterSaveChange)
     {
         Console.WriteLine($"Entity: {entry.EntityName}");
         Console.WriteLine($"State: {entry.State}");
@@ -99,7 +106,7 @@ app.MapPost("/one-to-many", async (AppDbContext context, UserRequestWithOrder re
         UserOrders = []
     };
 
-    foreach(var item in req.Orders)
+    foreach (var item in req.Orders)
     {
         user.UserOrders.Add(new Order
         {
@@ -132,5 +139,23 @@ app.MapPost("/many-to-many", async (AppDbContext context) =>
     await context.Enrollments.AddAsync(enrollment);
     await context.SaveChangesAsync();
 });
+
+app.MapGet("/students-courses", async (AppDbContext context) =>
+{
+    var students = context.Students
+        .Include(e => e.Enrollments)
+        .ThenInclude(e => e.Course)
+        .Select(e => new 
+        {
+            e.Name,
+            Course = e.Enrollments.Select(c => c.Course.Title).ToList()     
+        });
+
+    return Results.Ok(students);
+
+    // var student = await context.Students.FirstOrDefaultAsync();
+    // return Results.Ok(student);
+});
+
 
 app.Run();
