@@ -1,114 +1,100 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Text;
+using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 
 /*
- * --- CLASS 11: JWT AUTHENTICATION BASICS ---
+ * --- CLASS 11: MULTI-SCHEME WITH DEFAULT AUTHENTICATION ---
  * 
- * CONCEPT 1: Authentication (Who are you?)
- * We use the '/login-with-jwt' endpoint to verify credentials and issue a "Passport" (JWT).
+ * CONCEPT: Default Authentication Scheme
+ * When we have multiple schemes (Cookie, JWT, Google, etc.), we can set one as the "Default".
  * 
- * CONCEPT 2: Authorization (What can you do?)
- * We use the 'secure' endpoint to check the "Passport" and see if the user has the right permissions (Claims/Roles).
+ * WHY? 
+ * This simplifies our code. Any route that uses .RequireAuthorization() without 
+ * specifying a scheme will automatically use this Default.
  * 
- * CONCEPT 3: JWT (JSON Web Token)
- * A self-contained way to securely transmit information between parties as a JSON object.
- * It consists of Header, Payload (Claims), and Signature.
+ * In this example, we set "Cookies" as the Default.
  */
 
+var key = "secret-key-secret-key-secret-key-secret-key-secret-key-secret-key";
+
 var builder = WebApplication.CreateBuilder(args);
+
+// CONFIGURATION: Registering Multiple Authentication Schemes
+// We pass the Default Scheme name into AddAuthentication()
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie() 
+    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
-// This key is used to sign and verify our tokens. 
-// In production, this should be stored securely (e.g., Environment Variables or Key Vault).
-var key = "secret-key-secret-key-secret-key-12345";
+app.UseAuthentication();
+app.UseAuthorization(); 
 
-// ENDPOINT: Secure Resource
-// This simulates a page that only logged-in users can see.
-app.MapGet("secure", (HttpContext context) =>
+// --- LOGIN ENDPOINTS ---
+
+app.MapGet("/login-with-cookie", async (string userName, string password, HttpContext context) =>
 {
-    // 1. Get the Authorization header from the request
-    var authHeader = context.Request.Headers.Authorization.ToString();
-
-    // 2. Check if the header exists and follows the 'Bearer <token>' pattern
-    if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer ")) 
-    {
-        return Results.Unauthorized();
-    }
-
-    // 3. Extract the actual token string
-    var token = authHeader.Replace("Bearer ", ""); 
-
-    var handler = new JwtSecurityTokenHandler();
-    
-    // 4. Define how we want to validate the token
-    var parameters = new TokenValidationParameters
-    {
-        ValidateIssuer = false,      // For this demo, we don't check who issued it
-        ValidateAudience = false,    // For this demo, we don't check who it's for
-        ValidateLifetime = true,      // IMPORTANT: Check if the token has expired
-        ValidateIssuerSigningKey = true, // IMPORTANT: Check if the signature matches our secret key
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
-    };
-
-    try 
-    {
-        // 5. Validate the token. If it's tampered with or expired, this will fail.
-        var principal = handler.ValidateToken(token, parameters, out _);
-        
-        // 6. Extract user identity information (Claims) from the validated token
-        var userName = principal.FindFirst(ClaimTypes.Name)?.Value;
-        var role = principal.FindFirst(ClaimTypes.Role)?.Value;
-
-        return Results.Ok(new
-        {
-            message = "Access Granted! Your token is valid.",
-            userName,
-            role
-        });
-    }
-    catch (Exception)
-    {
-        // If validation fails (e.g., token was modified by a hacker), return Unauthorized
-        return Results.Unauthorized();
-    }
+    if (userName != "shafayet" || password != "password") return Results.Unauthorized();
+    var claims = new List<Claim> { new(ClaimTypes.Name, userName) };
+    await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+        new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)));
+    return Results.Ok("Logged in with Cookie!");
 });
 
-// ENDPOINT: Login / Token Issuance
-// Users provide credentials here to receive a JWT.
 app.MapGet("/login-with-jwt", (string userName, string password) =>
 {
-    // 1. Authenticate the user (Hardcoded for demonstration)
-    if (userName != "shafayet" && password != "password")
-        return Results.Unauthorized();
-
-    // 2. Create "Claims" - pieces of information about the user
-    var claims = new List<Claim>
-    {
-        new(ClaimTypes.Name, userName),
-        new(ClaimTypes.Role, "admin") // Giving the user an 'admin' role
-    };
-
-    // 3. Describe what the token should contain
-    var tokenDescriptor = new SecurityTokenDescriptor()
-    {
+    if (userName != "shafayet" || password != "password") return Results.Unauthorized();
+    var claims = new List<Claim> { new(ClaimTypes.Name, userName), new(ClaimTypes.Role, "admin") };
+    var tokenDescriptor = new SecurityTokenDescriptor() {
         Subject = new ClaimsIdentity(claims),
-        Expires = DateTime.UtcNow.AddMinutes(30), // Token expires in 30 minutes
-        SigningCredentials = new SigningCredentials(
-            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)), // Sign with our secret key
-            SecurityAlgorithms.HmacSha256Signature // Use HMAC SHA256 algorithm
-        )
+        Expires = DateTime.UtcNow.AddMinutes(30),
+        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)), SecurityAlgorithms.HmacSha256Signature)
     };
-
-    // 4. Generate and write the token to a string
     var handler = new JwtSecurityTokenHandler();
-    var token = handler.CreateToken(tokenDescriptor);
-    var jwt = handler.WriteToken(token);
-
-    // 5. Return the token to the client
-    return Results.Ok(new { token = jwt });
+    return Results.Ok(new { token = handler.WriteToken(handler.CreateToken(tokenDescriptor)) });
 });
 
+// --- SECURE ROUTE VERSIONS ---
+
+// VERSION 1: The Basic Secure Route
+// BEHAVIOR CHANGE: Because we set a DefaultScheme (Cookies), this route 
+// will now automatically require a valid Cookie.
+app.MapGet("/secure", () => "Basic Secure Route (Defaults to Cookie)").RequireAuthorization();
+
+// VERSION 2: Cookie ONLY (Redundant now, but explicitly stated)
+app.MapGet("/secure-cookie", () => "Access via Cookie ONLY")
+    .RequireAuthorization(new AuthorizeAttribute { AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme });
+
+// VERSION 3: JWT ONLY
+// Even though Cookie is default, we can OVERRIDE it by explicitly asking for JWT.
+app.MapGet("/secure-jwt", () => "Access via JWT ONLY")
+    .RequireAuthorization(new AuthorizeAttribute { AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme });
+
+// VERSION 4: BOTH (Multi-Scheme)
+// We still list both if we want to accept EITHER. The default only applies 
+// if we don't list any schemes.
+app.MapGet("/secure-both", (HttpContext context) => {
+    var type = context.User.Identity?.AuthenticationType;
+    return $"Access via {type}! Both schemes are supported here.";
+}).RequireAuthorization(new AuthorizeAttribute { 
+    AuthenticationSchemes = $"{CookieAuthenticationDefaults.AuthenticationScheme},{JwtBearerDefaults.AuthenticationScheme}" 
+});
 
 app.Run();

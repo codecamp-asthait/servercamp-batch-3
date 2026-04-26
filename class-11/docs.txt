@@ -1,0 +1,11 @@
+Class 11: Multi-Scheme Auth (Cookie + JWT)
+------------------------------------------
+Required Package:
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
+
+Concepts Covered:
+1. Configuring multiple Auth schemes in one app.
+2. SignInAsync for Browser-based Cookie Auth.
+3. SecurityTokenDescriptor for API-based JWT Auth.
+4. Using .RequireAuthorization() to protect endpoints for both schemes.
+5. Claims vs Roles.
