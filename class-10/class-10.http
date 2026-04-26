@@ -1,6 +1,29 @@
 @class_10_HostAddress = http://localhost:5139
 
-GET {{class_10_HostAddress}}/weatherforecast/
+### 1. Attempt to access protected endpoint without login
+# This should return 401 Unauthorized because we haven't logged in yet.
+GET {{class_10_HostAddress}}/cookie-authorized
 Accept: application/json
 
 ###
+
+### 2. Login to get authentication cookie
+# Use credentials: userName=shafayet, password=password
+# This will return a 'Set-Cookie' header which the HTTP client will save.
+GET {{class_10_HostAddress}}/login?userName=shafayet&password=password
+Accept: application/json
+
+###
+
+### 3. Access protected endpoint after login
+# Since we just logged in, the cookie will be sent automatically.
+# This should now return 200 OK.
+GET {{class_10_HostAddress}}/cookie-authorized
+Accept: application/json
+
+###
+
+### 4. Login with wrong credentials (fail test)
+# This should return 401 Unauthorized.
+GET {{class_10_HostAddress}}/login?userName=wrong&password=user
+Accept: application/json
