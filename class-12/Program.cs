@@ -1,12 +1,42 @@
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 
 // 1. Initialize the WebApplication builder.
 var builder = WebApplication.CreateBuilder(args);
 
-// Define a secret key used for signing and verifying JWT tokens.
-// In a real application, this should be stored securely (e.g., Environment Variables or Key Vault).
+// Configure the Database Context (ApplicationDbContext).
+// We are using PostgreSQL as our database provider.
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    // Define the connection string (Host, Port, DB Name, User, Password).
+    options.UseNpgsql("Host=localhost;Port=5432;Database=identity_db;Username=postgres;Password=password");
+});
+
+// Configure ASP.NET Core Identity.
+// Identity provides APIs for user management (create, delete, roles, etc.).
+builder.Services
+    .AddIdentity<IdentityUser, IdentityRole>(options =>
+{
+    // Educational: Weakening password requirements to make testing easier for students.
+    // In production, these should be set to 'true' and higher lengths for security.
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+
+    options.Password.RequiredLength = 1;
+    options.Password.RequiredUniqueChars = 0;
+})
+    // Tell Identity to use our ApplicationDbContext to store user data.
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    // Add default token providers (used for features like password reset or email confirmation).
+    .AddDefaultTokenProviders();
+
+
+// Define a secret key used for signing and verifying JWT tokens.// In a real application, this should be stored securely (e.g., Environment Variables or Key Vault).
 var key = "a-very-long-and-secure-secret-key-at-least-32-chars"u8.ToArray();
 
 // 2. Configure Authentication services.
@@ -23,8 +53,7 @@ builder.Services.AddAuthentication()
             ValidateIssuerSigningKey = true, // Ensure the token signature matches our secret key.
             ValidIssuer = "learning-identity-framework",
             ValidAudience = "learning-identity-framework",
-            IssuerSigningKey =
-                new SymmetricSecurityKey("a-very-long-and-secure-secret-key-at-least-32-chars"u8.ToArray())
+            IssuerSigningKey = new SymmetricSecurityKey(key)
         };
     });
 
@@ -50,14 +79,46 @@ app.UseAuthentication();
 // UseAuthorization: Checks if the identified user has permission to access the resource.
 app.UseAuthorization();
 
+// Endpoint to register a new user using ASP.NET Core Identity.
+app.MapPost("/register", async (
+    string email,
+    string password,
+    UserManager<IdentityUser> userManager
+) =>
+{
+    // Create a new IdentityUser object.
+    var user = new IdentityUser
+    {
+        UserName = email,
+        Email = email
+    };
+
+    // Use UserManager to create the user in the database and hash the password.
+    var result = await userManager.CreateAsync(user, password);
+
+    // Return errors if creation fails (e.g., duplicate email), otherwise return success.
+    return !result.Succeeded ? Results.BadRequest(result.Errors) : Results.Ok("User Created");
+});
+
 // Endpoint to login and receive a JWT token.
+// Now verifies credentials against the database.
 app.MapGet("/login", async (
     string email,
-    string password) =>
+    string password,
+    UserManager<IdentityUser> userManager) =>
 {
     // Basic validation.
     if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         return Results.Unauthorized();
+
+    // 1. Find the user by their email in the database.
+    var user = await userManager.FindByEmailAsync(email);
+    if (user is null) return Results.Unauthorized();
+
+    // 2. Verify if the provided password matches the hashed password in the database.
+    var isPasswordValid = await userManager.CheckPasswordAsync(user, password);
+    if (!isPasswordValid) return Results.Unauthorized();
+
 
     // Educational Logic: Assign an organization claim based on the email domain.
     var organization = email switch
