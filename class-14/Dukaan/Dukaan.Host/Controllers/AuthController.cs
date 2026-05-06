@@ -1,6 +1,6 @@
-﻿using Dukaan.Application.Dtos;
-using Dukaan.Application.Interfaces;
+using Dukaan.Application.Dtos;
 using Microsoft.AspNetCore.Mvc;
+using Dukaan.Application.Interfaces;
 
 namespace Dukaan.Host.Controllers;
 

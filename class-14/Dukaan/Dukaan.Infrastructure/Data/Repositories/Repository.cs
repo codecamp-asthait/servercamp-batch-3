@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Dukaan.Infrastructure.Data.DbContext;
+using Dukaan.Application.Interfaces;
 
 namespace Dukaan.Infrastructure.Data.Repositories;
 
@@ -11,7 +12,7 @@ namespace Dukaan.Infrastructure.Data.Repositories;
 /// The Repository pattern is used to decouple the business logic from the data access layer (EF Core).
 /// This makes the code more testable and easier to maintain.
 /// </remarks>
-public class Repository<T> where T : class
+public class Repository<T> : IRepository<T> where T : class
 {
     protected readonly ApplicationDbContext _dbContext;
     protected readonly DbSet<T> _dbSet;

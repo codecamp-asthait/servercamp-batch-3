@@ -1,8 +1,7 @@
-using Dukaan.Domain.Entities;
 using Dukaan.Application.Dtos;
-using Microsoft.AspNetCore.Identity;
-using Dukaan.Infrastructure.Data.Model;
-using Dukaan.Infrastructure.Data.Repositories;
+using Dukaan.Domain.Entities;
+using Dukaan.Application.Interfaces;
+using Dukaan.Infrastructure.Data.Dtos;
 
 namespace Dukaan.Infrastructure.Services;
 
@@ -13,8 +12,8 @@ namespace Dukaan.Infrastructure.Services;
 /// This service orchestrates the creation of a new Store (Tenant) and the primary user (Merchant).
 /// </remarks>
 public class TenantService(
-    Repository<Tenant> tenantRepository,
-    UserManager<Merchant> userManager)
+    IRepository<Tenant> tenantRepository,
+    IUserService userService)
 {
     /// <summary>
     /// Registers a new merchant along with their store (tenant).
@@ -40,7 +39,7 @@ public class TenantService(
         await tenantRepository.AddAsync(tenant);
         await tenantRepository.SaveChangesAsync();
 
-        var merchant = new Merchant
+        var merchantDto = new MerchantDto
         {
             UserName = request.Email,
             Email = request.Email,
@@ -48,9 +47,9 @@ public class TenantService(
             TenantId = tenant.Id
         };
 
-        var result = await userManager.CreateAsync(merchant, request.Password);
+        var isMerchantCreated = await userService.CreateMerchantAsync(merchantDto, request.Password);
 
-        return !result.Succeeded
+        return !isMerchantCreated
             ? throw new Exception("Merchant creation failed")
             : new RegisterResponse(tenant.Id, tenant.StoreName);
     }

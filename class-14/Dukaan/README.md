@@ -14,20 +14,24 @@ Dukaan is a robust, multi-tenant e-commerce platform built with ASP.NET Core. It
 
 ```text
 Dukaan/
-├── Application/           # DTOs, Mappers, and Application Logic
-│   └── Dtos/              # Data Transfer Objects for API requests/responses
-├── Domain/                # Core Business Logic and Entities
-│   ├── Entities/          # Database Models (e.g., Tenant)
-│   └── Interfaces/        # Domain-level abstractions (e.g., ITenantEntity)
-├── Host/                  # API Controllers and Entry Point
-│   └── Controllers/       # REST API Endpoints
-├── Infrastructure/        # External Concerns (Database, Services)
-│   ├── Data/              # EF Core Context and Repositories
-│   ├── Migrations/        # Database Schema Versions
-│   └── Services/          # Business Services (e.g., TenantService)
-├── Properties/            # Project configuration (launchSettings.json)
-├── Program.cs             # Application bootstrap and DI configuration
-└── appsettings.json       # Database connection strings and environment settings
+├── Dukaan.Domain/             # Core business models and abstractions
+│   ├── Entities/              # Database entities (e.g., Tenant.cs)
+│   └── Interfaces/            # Fundamental domain interfaces
+├── Dukaan.Application/        # Application logic and DTOs
+│   ├── Dtos/                  # Request/Response data structures
+│   ├── Interfaces/            # Service abstractions (e.g., IAuthService.cs)
+│   └── Services/              # Core business logic implementation
+├── Dukaan.Infrastructure/     # External concerns and data persistence
+│   ├── Data/
+│   │   ├── DbContext/         # EF Core context definition
+│   │   ├── Model/             # Infrastructure-specific models (e.g., Merchant.cs)
+│   │   ├── Repositories/      # Generic and specific repository implementations
+│   │   └── Services/          # Data-centric services (e.g., UserService.cs)
+│   └── Migrations/            # EF Core database migrations
+└── Dukaan.Host/               # API Entry Point and Configuration
+    ├── Controllers/           # REST API Endpoints
+    ├── Program.cs             # DI registration and middleware pipeline
+    └── appsettings.json       # Environment-specific configuration
 ```
 
 ## Technologies Used
@@ -57,12 +61,12 @@ Dukaan/
 
 3.  **Run Migrations**:
     ```bash
-    dotnet ef database update
+    dotnet ef database update --project Dukaan.Infrastructure --startup-project Dukaan.Host
     ```
 
 4.  **Run the Application**:
     ```bash
-    dotnet run --project Dukaan/Dukaan.csproj
+    dotnet run --project Dukaan.Host/Dukaan.Host.csproj
     ```
 
 ## API Documentation
