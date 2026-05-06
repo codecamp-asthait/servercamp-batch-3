@@ -4,6 +4,10 @@ using Dukaan.Infrastructure.Services;
 using Dukaan.Infrastructure.Data.Model;
 using Dukaan.Infrastructure.Data.DbContext;
 using Dukaan.Infrastructure.Data.Repositories;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Dukaan.Application.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,9 +25,26 @@ builder.Services.AddIdentity<Merchant, IdentityRole<Guid>>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+// Default authentication scheme and JWT authentication configuration
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+    });
+
+
 // Register application-specific services and repositories
 builder.Services.AddScoped<TenantService>();
 builder.Services.AddScoped(typeof(Repository<>)); // Registers the generic repository
+
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Register OpenAPI (Swagger) for API documentation
 builder.Services.AddOpenApi();
@@ -44,6 +65,9 @@ if (app.Environment.IsDevelopment())
 
 // Redirects HTTP requests to HTTPS
 app.UseHttpsRedirection();
+
+// Reads the incoming request, validates the authentication token (like JWT or cookie), and sets the user identity
+app.UseAuthentication();
 
 // Maps controller routes (e.g., [Route("api/[controller]")])
 app.MapControllers();
