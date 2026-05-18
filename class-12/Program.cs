@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 // 1. Initialize the WebApplication builder.
 var builder = WebApplication.CreateBuilder(args);
@@ -19,17 +20,17 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Identity provides APIs for user management (create, delete, roles, etc.).
 builder.Services
     .AddIdentity<IdentityUser, IdentityRole>(options =>
-{
-    // Educational: Weakening password requirements to make testing easier for students.
-    // In production, these should be set to 'true' and higher lengths for security.
-    options.Password.RequireDigit = false;
-    options.Password.RequireLowercase = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireNonAlphanumeric = false;
+    {
+        // Educational: Weakening password requirements to make testing easier for students.
+        // In production, these should be set to 'true' and higher lengths for security.
+        options.Password.RequireDigit = false;
+        options.Password.RequireLowercase = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireNonAlphanumeric = false;
 
-    options.Password.RequiredLength = 1;
-    options.Password.RequiredUniqueChars = 0;
-})
+        options.Password.RequiredLength = 1;
+        options.Password.RequiredUniqueChars = 0;
+    })
     // Tell Identity to use our ApplicationDbContext to store user data.
     .AddEntityFrameworkStores<ApplicationDbContext>()
     // Add default token providers (used for features like password reset or email confirmation).
@@ -41,7 +42,10 @@ var key = "a-very-long-and-secure-secret-key-at-least-32-chars"u8.ToArray();
 
 // 2. Configure Authentication services.
 // We are using JWT (JSON Web Token) Bearer authentication.
-builder.Services.AddAuthentication()
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
     .AddJwtBearer(options =>
     {
         // Define how the application should validate the incoming token.
