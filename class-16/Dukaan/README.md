@@ -6,17 +6,20 @@ Dukaan is a robust, multi-tenant e-commerce platform built with ASP.NET Core. It
 
 - **Multi-Tenancy**: Support for multiple isolated stores within a single application instance.
 - **Product Management**: Robust product catalog management scoped to individual tenants.
+- **Category Management**: Hierarchical product categories support with tree structure.
 - **Identity Management**: Integrated ASP.NET Core Identity for secure merchant authentication and authorization.
 - **Clean Architecture**: Organized into logical layers (Domain, Application, Infrastructure, Host) for maintainability and scalability.
 - **Generic Repository Pattern**: Standardized data access layer for consistency across entities.
 - **PostgreSQL Integration**: High-performance relational database storage using Entity Framework Core.
+- **Logging**: Structured logging integrated using Serilog.
 
 ## Multi-Tenancy Implementation
 
 Dukaan uses a modern approach to handle multi-tenancy seamlessly:
 
 - **Tenant Identification**: The `TenantProvider` service extracts the `tenant_id` from the authenticated user's JWT claims. This ensures that every request is tied to a specific tenant context.
-- **Automatic Scoping**: Entities that implement `ITenantEntity` (like `Product`) are automatically scoped.
+- **Automatic Scoping**: Entities that implement `ITenantEntity` (like `Product` and `Category`) are automatically scoped.
+- **EF Core Global Query Filters**: Data isolation is enforced at the database level using EF Core global query filters, ensuring tenants can only access their own data.
 - **EF Core Interceptor**: The `TenantInterceptor` automatically injects the current `TenantId` into entities during the `SaveChanges` operation. This prevents manual assignment errors and ensures data isolation at the application level.
 
 ## Project Structure
@@ -24,11 +27,11 @@ Dukaan uses a modern approach to handle multi-tenancy seamlessly:
 ```text
 Dukaan/
 ├── Dukaan.Domain/             # Core business models and abstractions
-│   ├── Entities/              # Database entities (e.g., Tenant.cs)
+│   ├── Entities/              # Database entities (e.g., Tenant.cs, Product.cs, Category.cs)
 │   └── Interfaces/            # Fundamental domain interfaces
 ├── Dukaan.Application/        # Application logic and DTOs
 │   ├── Dtos/                  # Request/Response data structures
-│   ├── Interfaces/            # Service abstractions (e.g., IAuthService.cs)
+│   ├── Interfaces/            # Service abstractions (e.g., IProductService.cs, ICategoryService.cs)
 │   └── Services/              # Core business logic implementation
 ├── Dukaan.Infrastructure/     # External concerns and data persistence
 │   ├── Data/
@@ -49,7 +52,8 @@ Dukaan/
 - **Database**: PostgreSQL
 - **ORM**: Entity Framework Core
 - **Identity**: Microsoft.AspNetCore.Identity.EntityFrameworkCore
-- **Documentation**: OpenAPI (Swagger)
+- **Logging**: Serilog
+- **Documentation**: OpenAPI (Swagger) with Swagger UI
 
 ## Getting Started
 
@@ -80,5 +84,8 @@ Dukaan/
 
 ## API Documentation
 
-Once the application is running in development mode, you can access the OpenAPI documentation at:
-`https://localhost:<port>/openapi/v1.json` (or use the interactive UI if configured).
+Once the application is running in development mode, you can access the interactive Swagger UI at:
+`https://localhost:<port>/swagger/index.html`
+
+The OpenAPI JSON specification is available at:
+`https://localhost:<port>/openapi/v1.json`
