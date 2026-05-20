@@ -12,8 +12,17 @@ using Dukaan.Infrastructure.Data.DbContext;
 using Dukaan.Infrastructure.Data.Repositories;
 using Dukaan.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.OpenApi;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Host.UseSerilog((_, configuration) => configuration
+        .WriteTo.Console()
+        .MinimumLevel.Information());
+}
 
 // --- 1. Service Registration Section ---
 // This is where we register dependencies for the built-in Dependency Injection (DI) container.
@@ -58,9 +67,30 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITenantProvider, TenantProvider>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+
 
 // Register OpenAPI (Swagger) for API documentation
 builder.Services.AddOpenApi();
+builder.Services.AddSwaggerGen(options =>
+{
+    var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header
+    });
+
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = [],
+    });
+});
 
 // Register MVC controllers
 builder.Services.AddControllers();
@@ -72,6 +102,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     // Enables the interactive Swagger UI in development mode
+    app.UseSwagger();
+    app.UseSwaggerUI();
     app.MapOpenApi();
 }
 

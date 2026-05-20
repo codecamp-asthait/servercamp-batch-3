@@ -46,4 +46,9 @@ public class Product : ITenantEntity
     /// Gets or sets a value indicating whether the product is active and visible in the store.
     /// </summary>
     public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the collection of category associations for this product.
+    /// </summary>
+    public virtual ICollection<CategorizedProduct> ProductCategories { get; set; } = [];
 }

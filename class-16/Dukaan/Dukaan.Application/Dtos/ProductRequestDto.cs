@@ -26,6 +26,7 @@ public record ProductRequestDto(
 /// <param name="ImageUrl">The product image URL.</param>
 /// <param name="StockQuantity">The current stock level.</param>
 /// <param name="IsActive">Indicates whether the product is active.</param>
+/// <param name="CategoryIds">The list of unique identifiers of categories associated with this product.</param>
 public record ProductResponseDto(
     Guid Id,
     string Name,
@@ -33,5 +34,6 @@ public record ProductResponseDto(
     decimal Price,
     string? ImageUrl,
     int StockQuantity,
-    bool IsActive
+    bool IsActive,
+    List<Guid> CategoryIds
 );

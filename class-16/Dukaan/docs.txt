@@ -10,3 +10,9 @@ dotnet ef migrations add addedProductTable
   --context ApplicationDbContext
   --project Dukaan.Infrastructure/
   --startup-project Dukaan.Host/
+
+// swagger
+dotnet add package Swashbuckle.AspNetCore
+
+// serilog
+dotnet add package Serilog.AspNetCore

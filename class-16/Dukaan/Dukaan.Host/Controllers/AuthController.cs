@@ -14,7 +14,6 @@ namespace Dukaan.Host.Controllers;
 [Route("api/[controller]")]
 public class AuthController(IAuthService authService) : ControllerBase
 {
-
     /// <summary>
     /// Authenticates a user using the provided credentials and returns a JWT token if authentication is successful.
     /// </summary>
