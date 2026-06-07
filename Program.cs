@@ -1,9 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDbContext<TodoDb>(opt => opt.UseInMemoryDatabase("TodoList"));
+
+builder.Services.AddDbContext<TodoDb>(opt =>
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
 var app = builder.Build();
+
+// Apply pending migrations automatically on startup
+using (var scope = app.Services.CreateScope())
+    scope.ServiceProvider.GetRequiredService<TodoDb>().Database.Migrate();
 
 app.MapGet("/todos", async (TodoDb db) => await db.Todos.ToListAsync());
 

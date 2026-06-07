@@ -1,0 +1,39 @@
+# Define all the containers (services) to run
+services:
+
+  # The PostgreSQL database service
+  db:
+    # Use the official Postgres image version 17
+    image: postgres:17
+    # Set environment variables to configure the database
+    environment:
+      POSTGRES_DB: todos        # Name of the database to create
+      POSTGRES_USER: postgres   # Superuser username
+      POSTGRES_PASSWORD: postgres # Superuser password
+    # Mount the named volume to the default Postgres data directory
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Expose Postgres port to the host machine for external access
+    ports:
+      - "5432:5432"
+
+  # The .NET API service
+  app:
+    # Build the image from the Dockerfile in the current directory
+    build: .
+    # Map host port 8080 to container port 8080
+    ports:
+      - "8080:8080"
+    # Don't start the app until the db service is up
+    depends_on:
+      - db
+
+# Declare named volumes managed by Docker
+volumes:
+  postgres_data:
+    # Use the built-in local driver
+    driver: local
+    driver_opts:
+      type: none    # No special filesystem type (plain directory)
+      o: bind       # Bind the host path into the volume
+      device: ./postgres_data  # Host directory where data is actually stored
