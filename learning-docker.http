@@ -1,4 +1,4 @@
-@baseUrl = http://localhost:5277
+@baseUrl = http://localhost:8080
 
 ### Get all todos
 GET {{baseUrl}}/todos
@@ -17,7 +17,7 @@ POST {{baseUrl}}/todos
 Content-Type: application/json
 
 {
-  "title": "Learn Docker"
+  "title": "Learn Docker 1"
 }
 
 ###

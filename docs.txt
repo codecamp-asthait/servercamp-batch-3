@@ -1,2 +1,17 @@
+# Docker (single container)
 docker build -t todo-app .
 docker run -p 8080:8080 todo-app
+docker run -d -p 8080:8080 todo-app
+docker run -d --name todo-container -p 8080:8080 todo-app
+
+# Docker Compose
+docker compose up           # start all services (foreground)
+docker compose up -d        # start all services (detached/background)
+docker compose up --build   # rebuild images before starting
+docker compose down         # stop and remove containers
+docker compose down -v      # stop and remove containers + volumes
+docker compose logs -f      # follow logs from all services
+docker compose ps           # list running services
+
+# pgAdmin: http://localhost:5050 (admin@admin.com / admin)
+# API:     http://localhost:8080

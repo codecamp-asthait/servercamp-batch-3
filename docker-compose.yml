@@ -14,8 +14,29 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     # Expose Postgres port to the host machine for external access
+    # ports:
+    #   - "5432:5432"
+    # Check if Postgres is ready to accept connections every 5 seconds
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
+    # Attach this service to our custom network
+    networks:
+      - todo_network
+
+  # pgAdmin - web-based Postgres admin UI
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com   # Login email for pgAdmin
+      PGADMIN_DEFAULT_PASSWORD: admin          # Login password for pgAdmin
     ports:
-      - "5432:5432"
+      - "5050:80"   # Access pgAdmin at http://localhost:5050
+    depends_on:
+      - db
+    networks:
+      - todo_network
 
   # The .NET API service
   app:
@@ -24,9 +45,13 @@ services:
     # Map host port 8080 to container port 8080
     ports:
       - "8080:8080"
-    # Don't start the app until the db service is up
+    # Don't start the app until the db service passes its health check
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    # Attach this service to our custom network
+    networks:
+      - todo_network
 
 # Declare named volumes managed by Docker
 volumes:
@@ -37,3 +62,11 @@ volumes:
       type: none    # No special filesystem type (plain directory)
       o: bind       # Bind the host path into the volume
       device: ./postgres_data  # Host directory where data is actually stored
+
+# Define custom networks
+networks:
+  todo_network:
+    # bridge = a private internal network on the host;
+    # containers on it can talk to each other by service name (e.g. "db")
+    # but are isolated from other Docker networks
+    driver: bridge
