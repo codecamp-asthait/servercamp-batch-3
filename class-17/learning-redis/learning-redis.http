@@ -1,0 +1,158 @@
+@learning_redis_HostAddress = http://localhost:5150
+
+### Health Check
+GET {{learning_redis_HostAddress}}/health
+Accept: application/json
+
+###
+
+# -------------------------------------------------------
+# Module 2: String Example (Basic Caching & TTL)
+# -------------------------------------------------------
+
+### POST /string-example — store a value with TTL
+POST {{learning_redis_HostAddress}}/string-example
+Content-Type: application/json
+
+{
+  "key": "product:42",
+  "value": { "name": "Widget", "price": 9.99 },
+  "ttlSeconds": 60
+}
+
+###
+
+### GET /string-example/{key} — retrieve a cached value
+GET {{learning_redis_HostAddress}}/string-example/product:42
+Accept: application/json
+
+###
+
+# -------------------------------------------------------
+# Module 3: Hash Example (Structured Data)
+# -------------------------------------------------------
+
+### POST /hash-example — create a user profile
+POST {{learning_redis_HostAddress}}/hash-example
+Content-Type: application/json
+
+{
+  "id": "1",
+  "name": "Alice",
+  "email": "alice@example.com"
+}
+
+###
+
+### GET /hash-example/{id} — retrieve a user profile
+GET {{learning_redis_HostAddress}}/hash-example/1
+Accept: application/json
+
+###
+
+### PATCH /hash-example/{id}/last-login — update last login
+PATCH {{learning_redis_HostAddress}}/hash-example/1/last-login
+Accept: application/json
+
+###
+
+# -------------------------------------------------------
+# Module 4: Set Example (Unique Collections)
+# -------------------------------------------------------
+
+### POST /set-example/visit — record a unique visitor
+POST {{learning_redis_HostAddress}}/set-example/visit
+Content-Type: application/json
+
+{
+  "ipAddress": "192.168.1.1"
+}
+
+###
+
+### GET /set-example/unique-count — get unique visitor count today
+GET {{learning_redis_HostAddress}}/set-example/unique-count
+Accept: application/json
+
+###
+
+# -------------------------------------------------------
+# Module 5: List Example (Activity Feeds)
+# -------------------------------------------------------
+
+### POST /list-example/search — add a search term to history
+POST {{learning_redis_HostAddress}}/list-example/search
+Content-Type: application/json
+
+{
+  "userId": "user:1",
+  "term": "redis lists"
+}
+
+###
+
+### GET /list-example/search/history — retrieve recent searches
+GET {{learning_redis_HostAddress}}/list-example/search/history?userId=user:1
+Accept: application/json
+
+###
+
+# -------------------------------------------------------
+# Module 6: Sorted Set Example (Leaderboards)
+# -------------------------------------------------------
+
+### POST /sorted-set-example/view — record a product view
+POST {{learning_redis_HostAddress}}/sorted-set-example/view
+Content-Type: application/json
+
+{
+  "productId": "product:42"
+}
+
+###
+
+### GET /sorted-set-example/top — get top 5 most viewed products
+GET {{learning_redis_HostAddress}}/sorted-set-example/top
+Accept: application/json
+
+###
+
+# -------------------------------------------------------
+# Module 7: Lock Example (Distributed Locking)
+# -------------------------------------------------------
+
+### POST /lock-example/inventory/seed — set initial inventory
+POST {{learning_redis_HostAddress}}/lock-example/inventory/seed
+Content-Type: application/json
+
+{
+  "count": 10
+}
+
+###
+
+### GET /lock-example/inventory — read current inventory
+GET {{learning_redis_HostAddress}}/lock-example/inventory
+Accept: application/json
+
+###
+
+### POST /lock-example/inventory/decrement — decrement inventory under lock
+POST {{learning_redis_HostAddress}}/lock-example/inventory/decrement
+Accept: application/json
+
+###
+
+# -------------------------------------------------------
+# Module 8: Pub/Sub Example
+# -------------------------------------------------------
+
+### POST /pubsub-example/notify — publish a message
+POST {{learning_redis_HostAddress}}/pubsub-example/notify
+Content-Type: application/json
+
+{
+  "message": "Deployment complete."
+}
+
+###
