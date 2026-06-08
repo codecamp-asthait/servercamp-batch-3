@@ -1,0 +1,60 @@
+@baseUrl = http://localhost:5278
+
+### GET all products
+GET {{baseUrl}}/api/product
+Accept: application/json
+
+###
+
+### GET product by ID (exists)
+GET {{baseUrl}}/api/product/1
+Accept: application/json
+
+###
+
+### GET product by ID (not found)
+GET {{baseUrl}}/api/product/999
+Accept: application/json
+
+###
+
+### POST create product (valid)
+POST {{baseUrl}}/api/product
+Content-Type: application/json
+
+{
+  "name": "Keyboard",
+  "price": 49.99
+}
+
+###
+
+### POST create product (invalid - name too short)
+POST {{baseUrl}}/api/product
+Content-Type: application/json
+
+{
+  "name": "K",
+  "price": 49.99
+}
+
+###
+
+### POST create product (invalid - price zero)
+POST {{baseUrl}}/api/product
+Content-Type: application/json
+
+{
+  "name": "Monitor",
+  "price": 0
+}
+
+###
+
+### POST create product (invalid - missing name)
+POST {{baseUrl}}/api/product
+Content-Type: application/json
+
+{
+  "price": 199.99
+}
