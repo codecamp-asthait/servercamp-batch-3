@@ -1,4 +1,3 @@
-using FluentValidation;
 using learning_validation_mediatr.Features.Products.Commands;
 using learning_validation_mediatr.Features.Products.Queries;
 using MediatR;
@@ -29,9 +28,9 @@ public class ProductController(IMediator mediator) : ControllerBase
 
     /// <summary>POST api/product — creates a new product.</summary>
     /// <remarks>
-    /// The command is bound directly from the request body and validated by
-    /// <see cref="learning_validation_mediatr.Behaviors.ValidationBehavior{TRequest,TResponse}"/>
-    /// in the MediatR pipeline before the handler runs.
+    /// Validated by <see cref="learning_validation_mediatr.Behaviors.ValidationBehavior{TRequest,TResponse}"/>
+    /// in the MediatR pipeline. Exceptions are handled globally by
+    /// <see cref="learning_validation_mediatr.Middleware.GlobalExceptionHandler"/>.
     /// </remarks>
     /// <param name="command">Create product command.</param>
     /// <response code="201">Product created successfully.</response>
@@ -39,18 +38,7 @@ public class ProductController(IMediator mediator) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateProductCommand command)
     {
-        try
-        {
-            var product = await mediator.Send(command);
-            return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
-        }
-        catch (ValidationException ex)
-        {
-            var errors = ex.Errors
-                .GroupBy(e => e.PropertyName)
-                .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
-
-            return BadRequest(new { errors });
-        }
+        var product = await mediator.Send(command);
+        return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
     }
 }

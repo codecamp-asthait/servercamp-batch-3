@@ -1,5 +1,6 @@
 using FluentValidation;
 using learning_validation_mediatr.Behaviors;
+using learning_validation_mediatr.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,7 @@ builder.Services.AddMediatR(cfg =>
 
 var app = builder.Build();
 
+app.UseMiddleware<GlobalExceptionHandler>();
 app.MapControllers();
 
 app.Run();
