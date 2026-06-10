@@ -1,0 +1,18 @@
+docker run --name dukaan-postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_DB=dukaan \
+  -p 5433:5432 \
+  -d postgres:latest
+
+
+dotnet ef migrations add addedProductTable 
+  --context ApplicationDbContext
+  --project Dukaan.Infrastructure/
+  --startup-project Dukaan.Host/
+
+// swagger
+dotnet add package Swashbuckle.AspNetCore
+
+// serilog
+dotnet add package Serilog.AspNetCore
