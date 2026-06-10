@@ -96,10 +96,25 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:3000",
+                "http://localhost:3001")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
 // Register MVC controllers
 builder.Services.AddControllers();
 
 var app = builder.Build();
+app.UseCors("AllowFrontend");
 
 // --- 2. Middleware Pipeline Section ---
 // This defines the order in which HTTP requests are processed.

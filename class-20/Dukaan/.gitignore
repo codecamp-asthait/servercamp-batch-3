@@ -483,3 +483,6 @@ $RECYCLE.BIN/
 
 #Local Configuration Files
 appsettings.Development.json
+
+
+docs/

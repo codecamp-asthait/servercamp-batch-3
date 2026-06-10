@@ -13,7 +13,9 @@ public interface IProductService
     /// <param name="request">The pagination and filtering request.</param>
     /// <returns>A paged response containing the list of products.</returns>
     Task<PagedResponse<ProductResponseDto>> GetAllAsync(PaginationRequest request);
-    
+
+    Task<PagedResponse<ProductResponseDto>> GetActiveAsync(PaginationRequest request);
+
     /// <summary>
     /// Asynchronously creates a new product.
     /// </summary>
@@ -58,6 +60,8 @@ public interface IProductService
     /// <param name="categoryId">The unique identifier of the category.</param>
     /// <returns>True if the detachment was successful; otherwise, false.</returns>
     Task<bool> DetachCategoryAsync(Guid productId, Guid categoryId);
+
+    Task<PagedResponse<ProductResponseDto>> GetActiveByCategoryAsync(Guid categoryId, PaginationRequest request);
 
     /// <summary>
     /// Asynchronously retrieves a paged list of products belonging to a specific category.

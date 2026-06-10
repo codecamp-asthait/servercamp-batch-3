@@ -10,4 +10,6 @@ public interface ITenantProvider
     /// </summary>
     /// <returns>The tenant ID if available; otherwise, null.</returns>
     Guid? GetTenantId();
+
+    void SetTenantId(Guid tenantId);
 }

@@ -34,6 +34,20 @@ public class ProductService(IRepository<Product> productRepository, IRepository<
         return new PagedResponse<ProductResponseDto>(dtos, totalCount, request.PageNumber, request.PageSize);
     }
 
+
+    /// <summary>
+    /// Asynchronously retrieves a paged list of active products for the current tenant.
+    /// </summary>
+    /// <param name="request">The pagination and filtering request.</param>
+    /// <returns>A paged response containing the list of active products.</returns>
+    public async Task<PagedResponse<ProductResponseDto>> GetActiveAsync(PaginationRequest request)
+    {
+        var (items, totalCount) = await productRepository.GetPagedAsync(
+            p => p.IsActive, request.PageNumber, request.PageSize, trackChanges: false,
+            p => p.ProductCategories);
+        return new PagedResponse<ProductResponseDto>(items.Select(MapToDto), totalCount, request.PageNumber, request.PageSize);
+    }
+
     /// <summary>
     /// Asynchronously retrieves a product by its unique identifier.
     /// </summary>
@@ -147,6 +161,22 @@ public class ProductService(IRepository<Product> productRepository, IRepository<
         return true;
     }
 
+
+    /// <summary>
+    /// Asynchronously retrieves a paged list of active products belonging to a specific category.
+    /// </summary>
+    /// <param name="categoryId">The unique identifier of the category.</param>
+    /// <param name="request">The pagination request.</param>
+    /// <returns>A paged response containing the list of active products in the category.</returns>
+    public async Task<PagedResponse<ProductResponseDto>> GetActiveByCategoryAsync(Guid categoryId, PaginationRequest request)
+    {
+        var (items, totalCount) = await productRepository.GetPagedAsync(
+            p => p.IsActive && p.ProductCategories.Any(pc => pc.CategoryId == categoryId),
+            request.PageNumber, request.PageSize, trackChanges: false,
+            p => p.ProductCategories);
+        return new PagedResponse<ProductResponseDto>(items.Select(MapToDto), totalCount, request.PageNumber, request.PageSize);
+    }
+
     /// <summary>
     /// Asynchronously retrieves a paged list of products belonging to a specific category.
     /// </summary>
@@ -174,4 +204,9 @@ public class ProductService(IRepository<Product> productRepository, IRepository<
 
         return new PagedResponse<ProductResponseDto>(dtos, totalCount, request.PageNumber, request.PageSize);
     }
+
+    private static ProductResponseDto MapToDto(Product p) =>
+        new(p.Id, p.Name, p.Description, p.Price, p.ImageUrl, p.StockQuantity, p.IsActive,
+            p.ProductCategories.Select(pc => pc.CategoryId).ToList());
+
 }
