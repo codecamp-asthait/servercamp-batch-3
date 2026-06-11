@@ -1,6 +1,7 @@
 using System.Text;
 using System.Security.Claims;
 using Dukaan.Application.Dtos;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
@@ -14,6 +15,7 @@ namespace Dukaan.Infrastructure.Data.Services;
 
 public class UserService(
     IUserStore<ApplicationUser> store,
+    IHttpContextAccessor httpContextAccessor,
     IOptions<IdentityOptions> optionsAccessor,
     IPasswordHasher<ApplicationUser> passwordHasher,
     IEnumerable<IUserValidator<ApplicationUser>> userValidators,
@@ -26,6 +28,12 @@ public class UserService(
 (store, optionsAccessor, passwordHasher, userValidators, passwordValidators, keyNormalizer, errors, services,
     logger), IUserService
 {
+    public Guid? GetCurrentUserId()
+    {
+        var userIdClaim = httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return Guid.TryParse(userIdClaim, out var userId) ? userId : null;
+    }
+
     public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
     {
         var user = await FindByEmailAsync(request.Email)
@@ -49,14 +57,19 @@ public class UserService(
         return new CustomerAuthResponseDto(GenerateToken(user), user.Email!);
     }
 
-    /// <summary>
-    /// Generates a JSON Web Token (JWT) for the specified user.
-    /// </summary>
-    /// <remarks>The generated token includes claims for the user's ID, email, and tenant ID. The token's
-    /// expiration and signing credentials are determined by the current configuration settings. The caller is
-    /// responsible for securely storing and transmitting the token.</remarks>
-    /// <param name="user">The user for whom the JWT will be generated. Cannot be null.</param>
-    /// <returns>A string containing the generated JWT for the specified user.</returns>
+    public async Task<ApplicationUser?> CreateUserAsync(string email, string password, string role)
+    {
+        var user = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            UserType = Enum.Parse<UserType>(role)
+        };
+
+        var result = await CreateAsync(user, password);
+        return result.Succeeded ? user : null;
+    }
+
     private string GenerateToken(ApplicationUser user)
     {
         var claims = new List<Claim>

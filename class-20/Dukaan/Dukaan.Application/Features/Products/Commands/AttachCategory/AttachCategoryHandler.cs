@@ -1,21 +1,39 @@
 using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Categories;
+using Dukaan.Application.Features.Products;
 using Dukaan.Application.Interfaces;
 using Dukaan.Domain.Entities;
+using ErrorOr;
 
 namespace Dukaan.Application.Features.Products.Commands.AttachCategory;
 
-public class AttachCategoryHandler(IRepository<CategorizedProduct> repository)
-    : ICommandHandler<AttachCategoryCommand, bool>
+public class AttachCategoryHandler(
+    IRepository<Product> productRepository,
+    IRepository<Category> categoryRepository)
+    : ICommandHandler<AttachCategoryCommand, ErrorOr<Success>>
 {
-    public async Task<bool> Handle(AttachCategoryCommand request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<Success>> Handle(AttachCategoryCommand request, CancellationToken cancellationToken)
     {
-        await repository.AddAsync(new CategorizedProduct
-        {
-            ProductId = request.ProductId,
-            CategoryId = request.CategoryId
-        });
+        var product = await productRepository.GetByIdAsync(request.ProductId);
+        
+        if (product is null)
+            return ProductErrors.NotFound;
 
-        await repository.SaveChangesAsync();
-        return true;
+        var category = await categoryRepository.GetByIdAsync(request.CategoryId);
+        
+        if (category is null)
+            return CategoryErrors.NotFound;
+
+        if (!product.ProductCategories.Any(pc => pc.CategoryId == request.CategoryId))
+        {
+            product.ProductCategories.Add(new CategorizedProduct
+            {
+                ProductId = request.ProductId,
+                CategoryId = request.CategoryId
+            });
+            await productRepository.SaveChangesAsync();
+        }
+
+        return Result.Success;
     }
 }

@@ -1,22 +1,26 @@
 using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Categories;
 using Dukaan.Application.Interfaces;
 using Dukaan.Domain.Entities;
+using ErrorOr;
 
 namespace Dukaan.Application.Features.Categories.Commands.UpdateCategory;
 
 public class UpdateCategoryHandler(IRepository<Category> repository)
-    : ICommandHandler<UpdateCategoryCommand, bool>
+    : ICommandHandler<UpdateCategoryCommand, ErrorOr<Success>>
 {
-    public async Task<bool> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<Success>> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken)
     {
-        var category = await repository.GetByIdAsync(request.Id, trackChanges: true);
-        if (category == null) return false;
+        var category = await repository.GetByIdAsync(request.Id);
+        
+        if (category is null)
+            return CategoryErrors.NotFound;
 
         category.Name = request.Name;
         category.Description = request.Description;
-        category.ParentCategoryId = request.ParentCategoryId;
 
         await repository.SaveChangesAsync();
-        return true;
+
+        return Result.Success;
     }
 }

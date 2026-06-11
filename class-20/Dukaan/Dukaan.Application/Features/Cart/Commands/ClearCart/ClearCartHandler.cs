@@ -1,8 +1,10 @@
 using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Cart;
 using Dukaan.Application.Features.Cart.Dtos;
 using Dukaan.Application.Features.Customers.Queries.GetCurrentCustomerId;
 using Dukaan.Application.Interfaces;
 using Dukaan.Domain.Entities;
+using ErrorOr;
 using MediatR;
 using CartEntity = Dukaan.Domain.Entities.Cart;
 
@@ -12,43 +14,29 @@ public class ClearCartHandler(
     IRepository<CartEntity> cartRepository,
     IRepository<CartItem> cartItemRepository,
     IMediator mediator)
-    : ICommandHandler<ClearCartCommand, CartDto>
+    : ICommandHandler<ClearCartCommand, ErrorOr<CartDto>>
 {
-    public async Task<CartDto> Handle(ClearCartCommand request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<CartDto>> Handle(ClearCartCommand request, CancellationToken cancellationToken)
     {
-        var customerId = await mediator.Send(new GetCurrentCustomerIdQuery(), cancellationToken)
-            ?? throw new UnauthorizedAccessException("Customer context not found.");
+        var customerIdResult = await mediator.Send(new GetCurrentCustomerIdQuery(), cancellationToken);
+        if (customerIdResult.IsError)
+            return CartErrors.CustomerNotFound;
 
-        var cart = await GetOrCreateActiveCartAsync(customerId);
+        var customerId = customerIdResult.Value;
+        
+        var carts = await cartRepository.FindAsync(
+            c => c.CustomerId == customerId,
+            trackChanges: true,
+            c => c.Items);
+        var cart = carts.FirstOrDefault();
+        
+        if (cart is null)
+            return CartErrors.NotFound;
 
-        foreach (var item in cart.Items.ToList())
-        {
-            cartItemRepository.Remove(item);
-        }
         cart.Items.Clear();
         await cartItemRepository.SaveChangesAsync();
 
         return MapToDto(cart);
-    }
-
-    private async Task<CartEntity> GetOrCreateActiveCartAsync(Guid customerId)
-    {
-        var results = await cartRepository.FindAsync(
-            c => c.CustomerId == customerId,
-            true,
-            c => c.Items.Select(i => i.Product));
-
-        var cart = results.FirstOrDefault();
-
-        if (cart == null)
-        {
-            cart = new CartEntity { CustomerId = customerId };
-            await cartRepository.AddAsync(cart);
-            await cartRepository.SaveChangesAsync();
-            return await GetOrCreateActiveCartAsync(customerId);
-        }
-
-        return cart;
     }
 
     private static CartDto MapToDto(CartEntity cart)

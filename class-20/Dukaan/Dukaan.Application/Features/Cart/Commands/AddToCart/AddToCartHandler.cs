@@ -1,8 +1,11 @@
 using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Cart;
 using Dukaan.Application.Features.Cart.Dtos;
 using Dukaan.Application.Features.Customers.Queries.GetCurrentCustomerId;
+using Dukaan.Application.Features.Products;
 using Dukaan.Application.Interfaces;
 using Dukaan.Domain.Entities;
+using ErrorOr;
 using MediatR;
 using CartEntity = Dukaan.Domain.Entities.Cart;
 
@@ -13,24 +16,32 @@ public class AddToCartHandler(
     IRepository<CartItem> cartItemRepository,
     IRepository<Product> productRepository,
     IMediator mediator)
-    : ICommandHandler<AddToCartCommand, CartDto>
+    : ICommandHandler<AddToCartCommand, ErrorOr<CartDto>>
 {
-    public async Task<CartDto> Handle(AddToCartCommand request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<CartDto>> Handle(AddToCartCommand request, CancellationToken cancellationToken)
     {
-        var customerId = await mediator.Send(new GetCurrentCustomerIdQuery(), cancellationToken)
-            ?? throw new UnauthorizedAccessException("Customer context not found.");
+        var customerIdResult = await mediator.Send(new GetCurrentCustomerIdQuery(), cancellationToken);
+        if (customerIdResult.IsError)
+            return CartErrors.CustomerNotFound;
 
-        var cart = await GetOrCreateActiveCartAsync(customerId);
-        var product = await productRepository.GetByIdAsync(request.ProductId)
-            ?? throw new KeyNotFoundException("Product not found.");
+        var customerId = customerIdResult.Value;
+        if (customerId is null)
+            return CartErrors.CustomerNotFound;
 
-        if (!product.IsActive) throw new InvalidOperationException("Product is not active.");
+        var cart = await GetOrCreateActiveCartAsync(customerId.Value);
+        
+        var product = await productRepository.GetByIdAsync(request.ProductId);
+        if (product is null)
+            return ProductErrors.NotFound;
+        
+        if (!product.IsActive)
+            return ProductErrors.NotActive;
 
         var existingItem = cart.Items.FirstOrDefault(i => i.ProductId == request.ProductId);
         var newQuantity = (existingItem?.Quantity ?? 0) + request.Quantity;
 
         if (newQuantity > product.StockQuantity)
-            throw new InvalidOperationException("Requested quantity exceeds available stock.");
+            return ProductErrors.InsufficientStock;
 
         if (existingItem != null)
         {

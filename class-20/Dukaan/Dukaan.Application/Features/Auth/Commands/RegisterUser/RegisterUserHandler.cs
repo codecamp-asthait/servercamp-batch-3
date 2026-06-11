@@ -1,27 +1,25 @@
 using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Auth;
 using Dukaan.Application.Features.Auth.Dtos;
 using Dukaan.Application.Interfaces;
-using Dukaan.Application.Models;
+using ErrorOr;
 
 namespace Dukaan.Application.Features.Auth.Commands.RegisterUser;
 
 public class RegisterUserHandler(IUserService userService)
-    : ICommandHandler<RegisterUserCommand, RegisterUserResponse>
+    : ICommandHandler<RegisterUserCommand, ErrorOr<AuthDto>>
 {
-    public async Task<RegisterUserResponse> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<AuthDto>> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
-        var user = new ApplicationUser
-        {
-            UserName = request.Email,
-            Email = request.Email,
-            PhoneNumber = request.PhoneNumber,
-            UserType = UserType.Merchant
-        };
+        var existingUser = await userService.FindByEmailAsync(request.Email);
+        if (existingUser is not null)
+            return AuthErrors.EmailAlreadyRegistered;
 
-        var result = await userService.CreateAsync(user, request.Password);
-        if (!result.Succeeded)
-            throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+        var user = await userService.CreateUserAsync(request.Email, request.Password, request.Role);
+        if (user is null)
+            return AuthErrors.IdentityCreationFailed;
 
-        return new RegisterUserResponse(user.Id, user.Email!);
+        var token = await userService.GenerateEmailConfirmationTokenAsync(user);
+        return new AuthDto(token, DateTime.UtcNow.AddDays(7));
     }
 }

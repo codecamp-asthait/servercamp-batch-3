@@ -2,13 +2,14 @@ using Dukaan.Application.Core.Abstractions;
 using Dukaan.Application.Features.Products.Dtos;
 using Dukaan.Application.Interfaces;
 using Dukaan.Domain.Entities;
+using ErrorOr;
 
 namespace Dukaan.Application.Features.Products.Commands.CreateProduct;
 
 public class CreateProductHandler(IRepository<Product> repository)
-    : ICommandHandler<CreateProductCommand, ProductDto>
+    : ICommandHandler<CreateProductCommand, ErrorOr<ProductDto>>
 {
-    public async Task<ProductDto> Handle(CreateProductCommand request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<ProductDto>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
     {
         var product = new Product
         {
@@ -22,14 +23,10 @@ public class CreateProductHandler(IRepository<Product> repository)
         await repository.AddAsync(product);
         await repository.SaveChangesAsync();
 
-        return new ProductDto(
-            product.Id,
-            product.Name,
-            product.Description,
-            product.Price,
-            product.ImageUrl,
-            product.StockQuantity,
-            product.IsActive,
-            []);
+        return MapToDto(product);
     }
+
+    private static ProductDto MapToDto(Product p) => new(
+        p.Id, p.Name, p.Description, p.Price, p.ImageUrl, p.StockQuantity, p.IsActive,
+        p.ProductCategories.Select(pc => pc.CategoryId).ToList());
 }

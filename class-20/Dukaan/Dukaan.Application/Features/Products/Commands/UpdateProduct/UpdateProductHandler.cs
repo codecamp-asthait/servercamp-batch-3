@@ -1,25 +1,30 @@
 using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Products;
 using Dukaan.Application.Interfaces;
 using Dukaan.Domain.Entities;
+using ErrorOr;
 
 namespace Dukaan.Application.Features.Products.Commands.UpdateProduct;
 
 public class UpdateProductHandler(IRepository<Product> repository)
-    : ICommandHandler<UpdateProductCommand, bool>
+    : ICommandHandler<UpdateProductCommand, ErrorOr<Success>>
 {
-    public async Task<bool> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<Success>> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
-        var product = await repository.GetByIdAsync(request.Id, trackChanges: true);
-        if (product == null) return false;
+        var product = await repository.GetByIdAsync(request.Id);
+        
+        if (product is null)
+            return ProductErrors.NotFound;
 
         product.Name = request.Name;
         product.Description = request.Description;
         product.Price = request.Price;
         product.ImageUrl = request.ImageUrl;
         product.StockQuantity = request.StockQuantity;
+        product.IsActive = request.IsActive;
 
-        repository.Update(product);
         await repository.SaveChangesAsync();
-        return true;
+
+        return Result.Success;
     }
 }

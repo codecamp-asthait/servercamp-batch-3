@@ -3,29 +3,27 @@ using Dukaan.Application.Dtos;
 using Dukaan.Application.Features.Products.Dtos;
 using Dukaan.Application.Interfaces;
 using Dukaan.Domain.Entities;
+using ErrorOr;
 
 namespace Dukaan.Application.Features.Products.Queries.GetProducts;
 
 public class GetProductsHandler(IRepository<Product> repository)
-    : IQueryHandler<GetProductsQuery, PagedResponse<ProductDto>>
+    : IQueryHandler<GetProductsQuery, ErrorOr<PagedResponse<ProductDto>>>
 {
-    public async Task<PagedResponse<ProductDto>> Handle(GetProductsQuery request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<PagedResponse<ProductDto>>> Handle(GetProductsQuery request, CancellationToken cancellationToken)
     {
         var (items, totalCount) = await repository.GetPagedAsync(
-            request.PaginationRequest.PageNumber,
-            request.PaginationRequest.PageSize);
+            p => true,
+            request.Pagination.PageNumber,
+            request.Pagination.PageSize,
+            trackChanges: false,
+            p => p.ProductCategories);
 
-        var dtos = items.Select(p => new ProductDto(
-            p.Id,
-            p.Name,
-            p.Description,
-            p.Price,
-            p.ImageUrl,
-            p.StockQuantity,
-            p.IsActive,
-            p.ProductCategories.Select(pc => pc.CategoryId).ToList()
-        ));
-
-        return new PagedResponse<ProductDto>(dtos, totalCount, request.PaginationRequest.PageNumber, request.PaginationRequest.PageSize);
+        var dtos = items.Select(MapToDto).ToList();
+        return new PagedResponse<ProductDto>(dtos, totalCount, request.Pagination.PageNumber, request.Pagination.PageSize);
     }
+
+    private static ProductDto MapToDto(Product p) => new(
+        p.Id, p.Name, p.Description, p.Price, p.ImageUrl, p.StockQuantity, p.IsActive,
+        p.ProductCategories.Select(pc => pc.CategoryId).ToList());
 }

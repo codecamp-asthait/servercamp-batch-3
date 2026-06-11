@@ -1,14 +1,9 @@
 namespace Dukaan.Application.Features.Merchants.Dtos;
 
-public record MerchantProfileResponseDto(
-    Guid MerchantId,
-    Guid TenantId,
+public record MerchantDto(
+    Guid Id,
+    string StoreName,
     string Slug,
-    string Email,
-    string Phone
-);
-
-public record RegisterMerchantResponseDto(
-    Guid TenantId,
-    string StoreName
+    string? Description,
+    string? LogoUrl
 );

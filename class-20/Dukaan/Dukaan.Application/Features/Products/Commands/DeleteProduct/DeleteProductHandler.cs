@@ -1,20 +1,24 @@
 using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Products;
 using Dukaan.Application.Interfaces;
 using Dukaan.Domain.Entities;
+using ErrorOr;
 
 namespace Dukaan.Application.Features.Products.Commands.DeleteProduct;
 
 public class DeleteProductHandler(IRepository<Product> repository)
-    : ICommandHandler<DeleteProductCommand, bool>
+    : ICommandHandler<DeleteProductCommand, ErrorOr<Deleted>>
 {
-    public async Task<bool> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<Deleted>> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
     {
-        var product = await repository.GetByIdAsync(request.Id, trackChanges: true);
-        if (product == null) return false;
+        var product = await repository.GetByIdAsync(request.Id);
+        
+        if (product is null)
+            return ProductErrors.NotFound;
 
-        product.IsActive = false;
-        repository.Update(product);
+        repository.Remove(product);
         await repository.SaveChangesAsync();
-        return true;
+
+        return Result.Deleted;
     }
 }

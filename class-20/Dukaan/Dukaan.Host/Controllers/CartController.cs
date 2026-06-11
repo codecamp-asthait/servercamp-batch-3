@@ -21,9 +21,9 @@ public class CartController(
     private async Task<bool> ResolveTenant(string? slug)
     {
         if (string.IsNullOrWhiteSpace(slug)) return false;
-        var tenantId = await Mediator.Send(new GetTenantIdFromSlugQuery(slug));
-        if (tenantId is null) return false;
-        tenantProvider.SetTenantId(tenantId.Value);
+        var tenantResult = await Mediator.Send(new GetTenantIdFromSlugQuery(slug));
+        if (tenantResult.IsError) return false;
+        tenantProvider.SetTenantId(tenantResult.Value!.Value);
         return true;
     }
 
@@ -31,8 +31,8 @@ public class CartController(
     public async Task<ActionResult<CartDto>> GetCart(
         [FromHeader(Name = "x-tenant-slug")] string? slug)
     {
-        if (!await ResolveTenant(slug)) return NotFound("Store not found.");
-        return Ok(await Mediator.Send(new GetCartQuery()));
+        if (!await ResolveTenant(slug)) return NotFound();
+        return ToActionResult(await Mediator.Send(new GetCartQuery()));
     }
 
     [HttpPost("items")]
@@ -40,19 +40,8 @@ public class CartController(
         [FromHeader(Name = "x-tenant-slug")] string? slug,
         [FromBody] AddToCartCommand command)
     {
-        if (!await ResolveTenant(slug)) return NotFound("Store not found.");
-        try
-        {
-            return Ok(await Mediator.Send(command));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(ex.Message);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ex.Message);
-        }
+        if (!await ResolveTenant(slug)) return NotFound();
+        return ToActionResult(await Mediator.Send(command));
     }
 
     [HttpPut("items/{productId}")]
@@ -61,19 +50,8 @@ public class CartController(
         Guid productId,
         [FromBody] UpdateQuantityRequest request)
     {
-        if (!await ResolveTenant(slug)) return NotFound("Store not found.");
-        try
-        {
-            return Ok(await Mediator.Send(new UpdateCartItemQuantityCommand(productId, request.Quantity)));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(ex.Message);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ex.Message);
-        }
+        if (!await ResolveTenant(slug)) return NotFound();
+        return ToActionResult(await Mediator.Send(new UpdateCartItemQuantityCommand(productId, request.Quantity)));
     }
 
     [HttpDelete("items/{productId}")]
@@ -81,15 +59,15 @@ public class CartController(
         [FromHeader(Name = "x-tenant-slug")] string? slug,
         Guid productId)
     {
-        if (!await ResolveTenant(slug)) return NotFound("Store not found.");
-        return Ok(await Mediator.Send(new RemoveCartItemCommand(productId)));
+        if (!await ResolveTenant(slug)) return NotFound();
+        return ToActionResult(await Mediator.Send(new RemoveCartItemCommand(productId)));
     }
 
     [HttpDelete]
     public async Task<ActionResult<CartDto>> ClearCart(
         [FromHeader(Name = "x-tenant-slug")] string? slug)
     {
-        if (!await ResolveTenant(slug)) return NotFound("Store not found.");
-        return Ok(await Mediator.Send(new ClearCartCommand()));
+        if (!await ResolveTenant(slug)) return NotFound();
+        return ToActionResult(await Mediator.Send(new ClearCartCommand()));
     }
 }

@@ -1,19 +1,22 @@
 using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Categories;
 using Dukaan.Application.Features.Categories.Dtos;
 using Dukaan.Application.Interfaces;
 using Dukaan.Domain.Entities;
+using ErrorOr;
 
 namespace Dukaan.Application.Features.Categories.Commands.CreateCategory;
 
 public class CreateCategoryHandler(IRepository<Category> repository)
-    : ICommandHandler<CreateCategoryCommand, CategoryDto>
+    : ICommandHandler<CreateCategoryCommand, ErrorOr<CategoryDto>>
 {
-    public async Task<CategoryDto> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<CategoryDto>> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
     {
         if (request.ParentCategoryId.HasValue)
         {
-            _ = await repository.GetByIdAsync(request.ParentCategoryId.Value)
-                ?? throw new Exception("Parent category not found");
+            var parent = await repository.GetByIdAsync(request.ParentCategoryId.Value);
+            if (parent is null)
+                return CategoryErrors.ParentNotFound;
         }
 
         var category = new Category

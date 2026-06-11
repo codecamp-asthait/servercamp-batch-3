@@ -1,22 +1,30 @@
 using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Products;
 using Dukaan.Application.Interfaces;
 using Dukaan.Domain.Entities;
+using ErrorOr;
 
 namespace Dukaan.Application.Features.Products.Commands.DetachCategory;
 
-public class DetachCategoryHandler(IRepository<CategorizedProduct> repository)
-    : ICommandHandler<DetachCategoryCommand, bool>
+public class DetachCategoryHandler(IRepository<Product> repository)
+    : ICommandHandler<DetachCategoryCommand, ErrorOr<Success>>
 {
-    public async Task<bool> Handle(DetachCategoryCommand request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<Success>> Handle(DetachCategoryCommand request, CancellationToken cancellationToken)
     {
-        var associations = await repository.FindAsync(cp =>
-            cp.ProductId == request.ProductId && cp.CategoryId == request.CategoryId);
+        var product = await repository.GetByIdAsync(request.ProductId);
+        
+        if (product is null)
+            return ProductErrors.NotFound;
 
-        var association = associations.FirstOrDefault();
-        if (association == null) return false;
+        var productCategory = product.ProductCategories
+            .FirstOrDefault(pc => pc.CategoryId == request.CategoryId);
+        
+        if (productCategory is not null)
+        {
+            product.ProductCategories.Remove(productCategory);
+            await repository.SaveChangesAsync();
+        }
 
-        repository.Remove(association);
-        await repository.SaveChangesAsync();
-        return true;
+        return Result.Success;
     }
 }

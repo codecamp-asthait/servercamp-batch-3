@@ -3,26 +3,23 @@ using Dukaan.Application.Dtos;
 using Dukaan.Application.Features.Categories.Dtos;
 using Dukaan.Application.Interfaces;
 using Dukaan.Domain.Entities;
+using ErrorOr;
 
 namespace Dukaan.Application.Features.Categories.Queries.GetCategories;
 
 public class GetCategoriesHandler(IRepository<Category> repository)
-    : IQueryHandler<GetCategoriesQuery, PagedResponse<CategoryDto>>
+    : IQueryHandler<GetCategoriesQuery, ErrorOr<PagedResponse<CategoryDto>>>
 {
-    public async Task<PagedResponse<CategoryDto>> Handle(GetCategoriesQuery request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<PagedResponse<CategoryDto>>> Handle(GetCategoriesQuery request, CancellationToken cancellationToken)
     {
         var (items, totalCount) = await repository.GetPagedAsync(
-            c => c.ParentCategoryId == null && c.IsActive,
-            request.PaginationRequest.PageNumber,
-            request.PaginationRequest.PageSize,
-            false,
-            c => c.SubCategories);
+            c => true,
+            request.Pagination.PageNumber,
+            request.Pagination.PageSize,
+            trackChanges: false);
 
-        return new PagedResponse<CategoryDto>(
-            items.Select(MapToDto),
-            totalCount,
-            request.PaginationRequest.PageNumber,
-            request.PaginationRequest.PageSize);
+        var dtos = items.Select(MapToDto).ToList();
+        return new PagedResponse<CategoryDto>(dtos, totalCount, request.Pagination.PageNumber, request.Pagination.PageSize);
     }
 
     private static CategoryDto MapToDto(Category category) => new(

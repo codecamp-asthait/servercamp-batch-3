@@ -1,3 +1,5 @@
+using Dukaan.Application.Core.Behaviors;
+using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -7,8 +9,13 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        services.AddMediatR(cfg => 
-            cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly);
+            cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+        });
+
+        services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 
         return services;
     }

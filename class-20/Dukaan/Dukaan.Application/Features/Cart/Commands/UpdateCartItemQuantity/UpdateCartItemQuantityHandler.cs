@@ -1,9 +1,11 @@
 using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Cart;
 using Dukaan.Application.Features.Cart.Dtos;
-using Dukaan.Application.Features.Cart.Commands.RemoveCartItem;
 using Dukaan.Application.Features.Customers.Queries.GetCurrentCustomerId;
+using Dukaan.Application.Features.Products;
 using Dukaan.Application.Interfaces;
 using Dukaan.Domain.Entities;
+using ErrorOr;
 using MediatR;
 using CartEntity = Dukaan.Domain.Entities.Cart;
 
@@ -14,54 +16,40 @@ public class UpdateCartItemQuantityHandler(
     IRepository<CartItem> cartItemRepository,
     IRepository<Product> productRepository,
     IMediator mediator)
-    : ICommandHandler<UpdateCartItemQuantityCommand, CartDto>
+    : ICommandHandler<UpdateCartItemQuantityCommand, ErrorOr<CartDto>>
 {
-    public async Task<CartDto> Handle(UpdateCartItemQuantityCommand request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<CartDto>> Handle(UpdateCartItemQuantityCommand request, CancellationToken cancellationToken)
     {
-        if (request.Quantity <= 0)
-        {
-            var removeCommand = new RemoveCartItemCommand(request.ProductId);
-            return await mediator.Send(removeCommand, cancellationToken);
-        }
+        var customerIdResult = await mediator.Send(new GetCurrentCustomerIdQuery(), cancellationToken);
+        if (customerIdResult.IsError)
+            return CartErrors.CustomerNotFound;
 
-        var customerId = await mediator.Send(new GetCurrentCustomerIdQuery(), cancellationToken)
-            ?? throw new UnauthorizedAccessException("Customer context not found.");
+        var customerId = customerIdResult.Value;
+        
+        var carts = await cartRepository.FindAsync(
+            c => c.CustomerId == customerId,
+            trackChanges: true,
+            c => c.Items.Select(i => i.Product));
+        var cart = carts.FirstOrDefault();
+        
+        if (cart is null)
+            return CartErrors.NotFound;
 
-        var cart = await GetOrCreateActiveCartAsync(customerId);
-        var item = cart.Items.FirstOrDefault(i => i.ProductId == request.ProductId)
-            ?? throw new KeyNotFoundException("Item not found in cart.");
+        var item = cart.Items.FirstOrDefault(i => i.ProductId == request.ProductId);
+        if (item is null)
+            return CartErrors.ItemNotFound;
 
-        var product = await productRepository.GetByIdAsync(request.ProductId)
-            ?? throw new KeyNotFoundException("Product not found.");
-
+        var product = await productRepository.GetByIdAsync(request.ProductId);
+        if (product is null)
+            return ProductErrors.NotFound;
+        
         if (request.Quantity > product.StockQuantity)
-            throw new InvalidOperationException("Requested quantity exceeds available stock.");
+            return ProductErrors.InsufficientStock;
 
         item.Quantity = request.Quantity;
-        cartItemRepository.Update(item);
         await cartItemRepository.SaveChangesAsync();
 
         return MapToDto(cart);
-    }
-
-    private async Task<CartEntity> GetOrCreateActiveCartAsync(Guid customerId)
-    {
-        var results = await cartRepository.FindAsync(
-            c => c.CustomerId == customerId,
-            true,
-            c => c.Items.Select(i => i.Product));
-
-        var cart = results.FirstOrDefault();
-
-        if (cart == null)
-        {
-            cart = new CartEntity { CustomerId = customerId };
-            await cartRepository.AddAsync(cart);
-            await cartRepository.SaveChangesAsync();
-            return await GetOrCreateActiveCartAsync(customerId);
-        }
-
-        return cart;
     }
 
     private static CartDto MapToDto(CartEntity cart)

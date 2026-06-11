@@ -1,61 +1,53 @@
 using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Auth;
 using Dukaan.Application.Features.Merchants.Dtos;
 using Dukaan.Application.Interfaces;
-using Dukaan.Application.Models;
 using Dukaan.Domain.Entities;
+using ErrorOr;
 
 namespace Dukaan.Application.Features.Merchants.Commands.RegisterMerchant;
 
 public class RegisterMerchantHandler(
     IUserService userService,
-    IRepository<Tenant> tenantRepository,
-    IRepository<Merchant> merchantRepository)
-    : ICommandHandler<RegisterMerchantCommand, RegisterMerchantResponseDto>
+    IRepository<Merchant> repository)
+    : ICommandHandler<RegisterMerchantCommand, ErrorOr<MerchantDto>>
 {
-    public async Task<RegisterMerchantResponseDto> Handle(RegisterMerchantCommand request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<MerchantDto>> Handle(RegisterMerchantCommand request, CancellationToken cancellationToken)
     {
-        await tenantRepository.BeginTransactionAsync();
+        await repository.BeginTransactionAsync();
+        
         try
         {
-            var tenant = new Tenant
-            {
-                StoreName = request.StoreName,
-                Slug = request.Slug.ToLower(),
-                Category = request.Category,
-                Country = request.Country
-            };
+            var existingUser = await userService.FindByEmailAsync(request.Email);
+            if (existingUser is not null)
+                return AuthErrors.EmailAlreadyRegistered;
 
-            await tenantRepository.AddAsync(tenant);
-            await tenantRepository.SaveChangesAsync();
+            var existingMerchant = await repository.FindAsync(m => m.Slug == request.Slug, trackChanges: false);
+            if (existingMerchant.Any())
+                return MerchantErrors.SlugTaken;
 
-            var user = new ApplicationUser
-            {
-                UserName = request.Email,
-                Email = request.Email,
-                PhoneNumber = request.PhoneNumber,
-                TenantId = tenant.Id,
-                UserType = UserType.Merchant
-            };
-
-            var result = await userService.CreateAsync(user, request.Password);
-            if (!result.Succeeded)
-                throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+            var user = await userService.CreateUserAsync(request.Email, request.Password, "Merchant");
+            if (user is null)
+                return AuthErrors.IdentityCreationFailed;
 
             var merchant = new Merchant
             {
                 ApplicationUserId = user.Id,
-                TenantId = tenant.Id
+                StoreName = request.StoreName,
+                Slug = request.Slug,
+                Description = request.Description,
+                LogoUrl = request.LogoUrl
             };
-            await merchantRepository.AddAsync(merchant);
 
-            await tenantRepository.SaveChangesAsync();
-            await tenantRepository.CommitTransactionAsync();
+            await repository.AddAsync(merchant);
+            await repository.SaveChangesAsync();
+            await repository.CommitTransactionAsync();
 
-            return new RegisterMerchantResponseDto(tenant.Id, tenant.StoreName);
+            return new MerchantDto(merchant.Id, merchant.StoreName, merchant.Slug, merchant.Description, merchant.LogoUrl);
         }
         catch
         {
-            await tenantRepository.RollbackTransactionAsync();
+            await repository.RollbackTransactionAsync();
             throw;
         }
     }

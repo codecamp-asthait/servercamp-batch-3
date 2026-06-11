@@ -1,55 +1,48 @@
 using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Auth;
+using Dukaan.Application.Features.Customers.Dtos;
 using Dukaan.Application.Interfaces;
-using Dukaan.Application.Models;
 using Dukaan.Domain.Entities;
+using ErrorOr;
 
 namespace Dukaan.Application.Features.Customers.Commands.RegisterCustomer;
 
 public class RegisterCustomerHandler(
     IUserService userService,
-    IRepository<Customer> customerRepository)
-    : ICommandHandler<RegisterCustomerCommand, Guid>
+    IRepository<Customer> repository)
+    : ICommandHandler<RegisterCustomerCommand, ErrorOr<CustomerDto>>
 {
-    public async Task<Guid> Handle(RegisterCustomerCommand request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<CustomerDto>> Handle(RegisterCustomerCommand request, CancellationToken cancellationToken)
     {
-        var existing = await userService.FindByEmailAsync(request.Email);
-        if (existing != null && existing.TenantId == request.TenantId)
-            throw new InvalidOperationException("Email already registered in this store.");
-
-        await customerRepository.BeginTransactionAsync();
+        await repository.BeginTransactionAsync();
+        
         try
         {
-            var user = new ApplicationUser
-            {
-                UserName = request.Email,
-                Email = request.Email,
-                PhoneNumber = request.Phone,
-                TenantId = request.TenantId,
-                UserType = UserType.Customer
-            };
+            var existingUser = await userService.FindByEmailAsync(request.Email);
+            if (existingUser is not null)
+                return AuthErrors.EmailAlreadyRegistered;
 
-            var result = await userService.CreateAsync(user, request.Password);
-            if (!result.Succeeded)
-                throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+            var user = await userService.CreateUserAsync(request.Email, request.Password, "Customer");
+            if (user is null)
+                return AuthErrors.IdentityCreationFailed;
 
             var customer = new Customer
             {
                 ApplicationUserId = user.Id,
-                TenantId = request.TenantId,
                 FirstName = request.FirstName,
                 LastName = request.LastName,
                 Phone = request.Phone
             };
 
-            await customerRepository.AddAsync(customer);
-            await customerRepository.SaveChangesAsync();
-            await customerRepository.CommitTransactionAsync();
+            await repository.AddAsync(customer);
+            await repository.SaveChangesAsync();
+            await repository.CommitTransactionAsync();
 
-            return customer.Id;
+            return new CustomerDto(customer.Id, customer.FirstName, customer.LastName, customer.Phone);
         }
         catch
         {
-            await customerRepository.RollbackTransactionAsync();
+            await repository.RollbackTransactionAsync();
             throw;
         }
     }

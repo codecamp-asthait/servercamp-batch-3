@@ -1,17 +1,23 @@
 using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Categories;
 using Dukaan.Application.Features.Categories.Dtos;
 using Dukaan.Application.Interfaces;
 using Dukaan.Domain.Entities;
+using ErrorOr;
 
 namespace Dukaan.Application.Features.Categories.Queries.GetCategoryById;
 
 public class GetCategoryByIdHandler(IRepository<Category> repository)
-    : IQueryHandler<GetCategoryByIdQuery, CategoryDto?>
+    : IQueryHandler<GetCategoryByIdQuery, ErrorOr<CategoryDto?>>
 {
-    public async Task<CategoryDto?> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<CategoryDto?>> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken)
     {
-        var category = await repository.GetByIdAsync(request.Id);
-        return category != null ? MapToDto(category) : null;
+        var category = await repository.GetByIdAsync(request.Id, trackChanges: false);
+        
+        if (category is null)
+            return CategoryErrors.NotFound;
+        
+        return MapToDto(category);
     }
 
     private static CategoryDto MapToDto(Category category) => new(

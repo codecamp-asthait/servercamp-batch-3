@@ -1,24 +1,30 @@
 using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Categories;
 using Dukaan.Application.Interfaces;
 using Dukaan.Domain.Entities;
+using ErrorOr;
 
 namespace Dukaan.Application.Features.Categories.Commands.DeleteCategory;
 
 public class DeleteCategoryHandler(IRepository<Category> repository)
-    : ICommandHandler<DeleteCategoryCommand, bool>
+    : ICommandHandler<DeleteCategoryCommand, ErrorOr<Deleted>>
 {
-    public async Task<bool> Handle(DeleteCategoryCommand request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<Deleted>> Handle(DeleteCategoryCommand request, CancellationToken cancellationToken)
     {
-        var category = await repository.GetByIdAsync(request.Id, trackChanges: true);
-        if (category == null) return false;
+        var category = await repository.GetByIdAsync(request.Id);
+        
+        if (category is null)
+            return CategoryErrors.NotFound;
 
-        if (category.SubCategories.Any(sc => sc.IsActive))
-            throw new Exception("Cannot delete category with active sub-categories.");
+        if (category.SubCategories.Any())
+            return CategoryErrors.HasSubCategories;
+
         if (category.ProductLinks.Any())
-            throw new Exception("Cannot delete category assigned to products.");
+            return CategoryErrors.HasProducts;
 
-        category.IsActive = false;
+        repository.Remove(category);
         await repository.SaveChangesAsync();
-        return true;
+
+        return Result.Deleted;
     }
 }

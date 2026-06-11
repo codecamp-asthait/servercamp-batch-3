@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using Dukaan.Host.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -65,6 +66,8 @@ public static class DependencyInjection
             });
         });
 
+        services.AddExceptionHandler<GlobalExceptionHandler>();
+        services.AddProblemDetails();
         services.AddControllers();
 
         return services;
@@ -72,6 +75,7 @@ public static class DependencyInjection
 
     public static WebApplication UsePresentationPipeline(this WebApplication app)
     {
+        app.UseExceptionHandler();
         app.UseCors("AllowFrontend");
 
         if (app.Environment.IsDevelopment())
