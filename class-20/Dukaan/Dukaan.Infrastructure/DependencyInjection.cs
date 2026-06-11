@@ -1,7 +1,6 @@
 using Dukaan.Application.Interfaces;
-using Dukaan.Application.Services;
 using Dukaan.Infrastructure.Data.DbContext;
-using Dukaan.Infrastructure.Data.Model;
+using Dukaan.Application.Models;
 using Dukaan.Infrastructure.Data.Repositories;
 using Dukaan.Infrastructure.Data.Services;
 using Dukaan.Infrastructure.Interceptors;
@@ -35,8 +34,7 @@ public static class DependencyInjection
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
         services.AddScoped<IUserService, UserService>();
-        services.AddScoped<ICustomerService, CustomerService>();
-        services.AddScoped<IMerchantService, MerchantService>();
+
         services.AddScoped<ITenantProvider, TenantProvider>();
         services.AddHttpContextAccessor();
 

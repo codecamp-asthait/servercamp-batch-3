@@ -8,7 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using Dukaan.Application.Interfaces;
 using Dukaan.Infrastructure.Data.Dtos;
-using Dukaan.Infrastructure.Data.Model;
+using Dukaan.Application.Models;
 using Microsoft.Extensions.Configuration;
 using Dukaan.Application.DTOs;
 

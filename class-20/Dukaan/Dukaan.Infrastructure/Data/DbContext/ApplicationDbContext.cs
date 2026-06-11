@@ -3,7 +3,7 @@ using Dukaan.Domain.Entities;
 using Dukaan.Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Dukaan.Infrastructure.Data.Model;
+using Dukaan.Application.Models;
 using Dukaan.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 

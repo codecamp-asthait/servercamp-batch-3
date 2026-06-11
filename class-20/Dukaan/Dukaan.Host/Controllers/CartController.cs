@@ -1,48 +1,48 @@
 using Dukaan.Application.Dtos;
-using Dukaan.Application.Interfaces;
+using Dukaan.Application.Features.Cart.Commands.AddToCart;
+using Dukaan.Application.Features.Cart.Commands.ClearCart;
+using Dukaan.Application.Features.Cart.Commands.RemoveCartItem;
+using Dukaan.Application.Features.Cart.Commands.UpdateCartItemQuantity;
+using Dukaan.Application.Features.Cart.Dtos;
+using Dukaan.Application.Features.Cart.Queries.GetCart;
+using Dukaan.Application.Features.Tenants.Queries.GetTenantIdFromSlug;
 using Dukaan.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dukaan.Host.Controllers;
 
-/// <summary>
-/// Controller for managing the customer's shopping cart.
-/// </summary>
-[Authorize] // Should be restricted by policy in a real app, keeping it simple for now
-[ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class CartController(
-    ICartService cartService,
-    ITenantService tenantService,
-    ITenantProvider tenantProvider) : ControllerBase
+    ITenantProvider tenantProvider) : BaseApiController
 {
     private async Task<bool> ResolveTenant(string? slug)
     {
         if (string.IsNullOrWhiteSpace(slug)) return false;
-        var tenantId = await tenantService.GetTenantIdFromSlug(slug);
+        var tenantId = await Mediator.Send(new GetTenantIdFromSlugQuery(slug));
         if (tenantId is null) return false;
         tenantProvider.SetTenantId(tenantId.Value);
         return true;
     }
 
     [HttpGet]
-    public async Task<ActionResult<CartResponseDto>> GetCart(
+    public async Task<ActionResult<CartDto>> GetCart(
         [FromHeader(Name = "x-tenant-slug")] string? slug)
     {
         if (!await ResolveTenant(slug)) return NotFound("Store not found.");
-        return Ok(await cartService.GetCartAsync());
+        return Ok(await Mediator.Send(new GetCartQuery()));
     }
 
     [HttpPost("items")]
-    public async Task<ActionResult<CartResponseDto>> AddItem(
+    public async Task<ActionResult<CartDto>> AddItem(
         [FromHeader(Name = "x-tenant-slug")] string? slug,
         [FromBody] AddToCartRequestDto request)
     {
         if (!await ResolveTenant(slug)) return NotFound("Store not found.");
         try
         {
-            return Ok(await cartService.AddItemAsync(request));
+            return Ok(await Mediator.Send(new AddToCartCommand(request)));
         }
         catch (InvalidOperationException ex)
         {
@@ -55,7 +55,7 @@ public class CartController(
     }
 
     [HttpPut("items/{productId}")]
-    public async Task<ActionResult<CartResponseDto>> UpdateQuantity(
+    public async Task<ActionResult<CartDto>> UpdateQuantity(
         [FromHeader(Name = "x-tenant-slug")] string? slug,
         Guid productId,
         [FromBody] UpdateQuantityRequestDto request)
@@ -63,7 +63,7 @@ public class CartController(
         if (!await ResolveTenant(slug)) return NotFound("Store not found.");
         try
         {
-            return Ok(await cartService.UpdateQuantityAsync(productId, request));
+            return Ok(await Mediator.Send(new UpdateCartItemQuantityCommand(productId, request)));
         }
         catch (InvalidOperationException ex)
         {
@@ -76,19 +76,19 @@ public class CartController(
     }
 
     [HttpDelete("items/{productId}")]
-    public async Task<ActionResult<CartResponseDto>> RemoveItem(
+    public async Task<ActionResult<CartDto>> RemoveItem(
         [FromHeader(Name = "x-tenant-slug")] string? slug,
         Guid productId)
     {
         if (!await ResolveTenant(slug)) return NotFound("Store not found.");
-        return Ok(await cartService.RemoveItemAsync(productId));
+        return Ok(await Mediator.Send(new RemoveCartItemCommand(productId)));
     }
 
     [HttpDelete]
-    public async Task<ActionResult<CartResponseDto>> ClearCart(
+    public async Task<ActionResult<CartDto>> ClearCart(
         [FromHeader(Name = "x-tenant-slug")] string? slug)
     {
         if (!await ResolveTenant(slug)) return NotFound("Store not found.");
-        return Ok(await cartService.ClearCartAsync());
+        return Ok(await Mediator.Send(new ClearCartCommand()));
     }
 }
