@@ -34,12 +34,12 @@ public class ProductController : BaseApiController
     }
 
     [HttpPost]
-    public async Task<ActionResult<ProductDto>> Create(ProductRequestDto request)
-        => Ok(await Mediator.Send(new CreateProductCommand(request)));
+    public async Task<ActionResult<ProductDto>> Create(CreateProductCommand command)
+        => Ok(await Mediator.Send(command));
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, ProductRequestDto request)
-        => await Mediator.Send(new UpdateProductCommand(id, request)) ? NoContent() : NotFound();
+    public async Task<IActionResult> Update(Guid id, UpdateProductCommand command)
+        => await Mediator.Send(command with { Id = id }) ? NoContent() : NotFound();
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)

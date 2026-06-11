@@ -1,4 +1,3 @@
-using Dukaan.Application.Dtos;
 using Dukaan.Application.Features.Cart.Commands.AddToCart;
 using Dukaan.Application.Features.Cart.Commands.ClearCart;
 using Dukaan.Application.Features.Cart.Commands.RemoveCartItem;
@@ -11,6 +10,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dukaan.Host.Controllers;
+
+public record UpdateQuantityRequest(int Quantity);
 
 [Authorize]
 [Route("api/[controller]")]
@@ -37,12 +38,12 @@ public class CartController(
     [HttpPost("items")]
     public async Task<ActionResult<CartDto>> AddItem(
         [FromHeader(Name = "x-tenant-slug")] string? slug,
-        [FromBody] AddToCartRequestDto request)
+        [FromBody] AddToCartCommand command)
     {
         if (!await ResolveTenant(slug)) return NotFound("Store not found.");
         try
         {
-            return Ok(await Mediator.Send(new AddToCartCommand(request)));
+            return Ok(await Mediator.Send(command));
         }
         catch (InvalidOperationException ex)
         {
@@ -58,12 +59,12 @@ public class CartController(
     public async Task<ActionResult<CartDto>> UpdateQuantity(
         [FromHeader(Name = "x-tenant-slug")] string? slug,
         Guid productId,
-        [FromBody] UpdateQuantityRequestDto request)
+        [FromBody] UpdateQuantityRequest request)
     {
         if (!await ResolveTenant(slug)) return NotFound("Store not found.");
         try
         {
-            return Ok(await Mediator.Send(new UpdateCartItemQuantityCommand(productId, request)));
+            return Ok(await Mediator.Send(new UpdateCartItemQuantityCommand(productId, request.Quantity)));
         }
         catch (InvalidOperationException ex)
         {

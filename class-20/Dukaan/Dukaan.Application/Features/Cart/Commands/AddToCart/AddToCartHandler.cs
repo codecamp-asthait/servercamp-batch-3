@@ -21,13 +21,13 @@ public class AddToCartHandler(
             ?? throw new UnauthorizedAccessException("Customer context not found.");
 
         var cart = await GetOrCreateActiveCartAsync(customerId);
-        var product = await productRepository.GetByIdAsync(request.Request.ProductId)
+        var product = await productRepository.GetByIdAsync(request.ProductId)
             ?? throw new KeyNotFoundException("Product not found.");
 
         if (!product.IsActive) throw new InvalidOperationException("Product is not active.");
 
-        var existingItem = cart.Items.FirstOrDefault(i => i.ProductId == request.Request.ProductId);
-        var newQuantity = (existingItem?.Quantity ?? 0) + request.Request.Quantity;
+        var existingItem = cart.Items.FirstOrDefault(i => i.ProductId == request.ProductId);
+        var newQuantity = (existingItem?.Quantity ?? 0) + request.Quantity;
 
         if (newQuantity > product.StockQuantity)
             throw new InvalidOperationException("Requested quantity exceeds available stock.");
@@ -43,7 +43,7 @@ public class AddToCartHandler(
             {
                 CartId = cart.Id,
                 ProductId = product.Id,
-                Quantity = request.Request.Quantity,
+                Quantity = request.Quantity,
                 UnitPrice = product.Price
             };
             await cartItemRepository.AddAsync(newItem);

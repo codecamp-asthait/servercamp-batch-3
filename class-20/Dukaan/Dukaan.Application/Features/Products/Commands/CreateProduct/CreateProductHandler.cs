@@ -12,11 +12,11 @@ public class CreateProductHandler(IRepository<Product> repository)
     {
         var product = new Product
         {
-            Name = request.Request.Name,
-            Description = request.Request.Description,
-            Price = request.Request.Price,
-            ImageUrl = request.Request.ImageUrl,
-            StockQuantity = request.Request.StockQuantity
+            Name = request.Name,
+            Description = request.Description,
+            Price = request.Price,
+            ImageUrl = request.ImageUrl,
+            StockQuantity = request.StockQuantity
         };
 
         await repository.AddAsync(product);

@@ -18,7 +18,7 @@ public class UpdateCartItemQuantityHandler(
 {
     public async Task<CartDto> Handle(UpdateCartItemQuantityCommand request, CancellationToken cancellationToken)
     {
-        if (request.Request.Quantity <= 0)
+        if (request.Quantity <= 0)
         {
             var removeCommand = new RemoveCartItemCommand(request.ProductId);
             return await mediator.Send(removeCommand, cancellationToken);
@@ -34,10 +34,10 @@ public class UpdateCartItemQuantityHandler(
         var product = await productRepository.GetByIdAsync(request.ProductId)
             ?? throw new KeyNotFoundException("Product not found.");
 
-        if (request.Request.Quantity > product.StockQuantity)
+        if (request.Quantity > product.StockQuantity)
             throw new InvalidOperationException("Requested quantity exceeds available stock.");
 
-        item.Quantity = request.Request.Quantity;
+        item.Quantity = request.Quantity;
         cartItemRepository.Update(item);
         await cartItemRepository.SaveChangesAsync();
 

@@ -26,12 +26,12 @@ public class CategoriesController : BaseApiController
     }
 
     [HttpPost]
-    public async Task<ActionResult<CategoryDto>> Create(CategoryRequestDto request)
-        => Ok(await Mediator.Send(new CreateCategoryCommand(request.Name, request.Description, request.ParentCategoryId)));
+    public async Task<ActionResult<CategoryDto>> Create(CreateCategoryCommand command)
+        => Ok(await Mediator.Send(command));
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, CategoryRequestDto request)
-        => await Mediator.Send(new UpdateCategoryCommand(id, request.Name, request.Description, request.ParentCategoryId)) ? NoContent() : NotFound();
+    public async Task<IActionResult> Update(Guid id, UpdateCategoryCommand command)
+        => await Mediator.Send(command with { Id = id }) ? NoContent() : NotFound();
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id) =>

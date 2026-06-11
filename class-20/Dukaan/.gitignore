@@ -486,5 +486,5 @@ $RECYCLE.BIN/
 appsettings.Development.json
 
 
-docs/
+docs/*
 AGENTS.md

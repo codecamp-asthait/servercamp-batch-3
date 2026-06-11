@@ -12,11 +12,11 @@ public class UpdateProductHandler(IRepository<Product> repository)
         var product = await repository.GetByIdAsync(request.Id, trackChanges: true);
         if (product == null) return false;
 
-        product.Name = request.Request.Name;
-        product.Description = request.Request.Description;
-        product.Price = request.Request.Price;
-        product.ImageUrl = request.Request.ImageUrl;
-        product.StockQuantity = request.Request.StockQuantity;
+        product.Name = request.Name;
+        product.Description = request.Description;
+        product.Price = request.Price;
+        product.ImageUrl = request.ImageUrl;
+        product.StockQuantity = request.StockQuantity;
 
         repository.Update(product);
         await repository.SaveChangesAsync();
