@@ -1,8 +1,9 @@
-using dukaan.Application.DTOs;
+using Dukaan.Application.DTOs;
 
-namespace dukaan.Application.Services;
+namespace Dukaan.Application.Services;
 
 public interface ICustomerService
 {
     Task<Guid> RegisterAsync(CustomerRegisterRequest request, Guid tenantId);
+    Task<Guid?> GetCurrentCustomerIdAsync();
 }

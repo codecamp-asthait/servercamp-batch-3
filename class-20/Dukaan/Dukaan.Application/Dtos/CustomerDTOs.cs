@@ -1,4 +1,4 @@
-namespace dukaan.Application.DTOs;
+namespace Dukaan.Application.DTOs;
 
 public record CustomerRegisterRequest(
     string Email,

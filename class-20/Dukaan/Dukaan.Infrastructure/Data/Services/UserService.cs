@@ -10,7 +10,7 @@ using Dukaan.Application.Interfaces;
 using Dukaan.Infrastructure.Data.Dtos;
 using Dukaan.Infrastructure.Data.Model;
 using Microsoft.Extensions.Configuration;
-using dukaan.Application.DTOs;
+using Dukaan.Application.DTOs;
 
 namespace Dukaan.Infrastructure.Data.Services;
 

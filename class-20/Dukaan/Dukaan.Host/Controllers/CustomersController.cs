@@ -1,9 +1,9 @@
-using dukaan.Application.DTOs;
-using dukaan.Application.Services;
+using Dukaan.Application.DTOs;
+using Dukaan.Application.Services;
 using Dukaan.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-namespace dukaan.Host.Controllers;
+namespace Dukaan.Host.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

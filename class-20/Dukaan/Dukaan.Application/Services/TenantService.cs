@@ -1,7 +1,7 @@
 using Dukaan.Domain.Entities;
 using Dukaan.Application.Interfaces;
 
-namespace dukaan.Application.Services;
+namespace Dukaan.Application.Services;
 
 public class TenantService(IRepository<Tenant> repository) : ITenantService
 {

@@ -1,7 +1,7 @@
 using Serilog;
 using System.Text;
 using Microsoft.OpenApi;
-using dukaan.Application.Services;
+using Dukaan.Application.Services;
 using Dukaan.Application.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
@@ -71,6 +71,7 @@ builder.Services.AddScoped<ITenantProvider, TenantProvider>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IMerchantService, MerchantService>();
+builder.Services.AddScoped<ICartService, CartService>();
 
 
 

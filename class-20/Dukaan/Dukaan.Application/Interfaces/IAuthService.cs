@@ -1,4 +1,4 @@
-﻿using dukaan.Application.DTOs;
+﻿using Dukaan.Application.DTOs;
 using Dukaan.Application.Dtos;
 
 namespace Dukaan.Application.Interfaces;

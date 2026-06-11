@@ -17,6 +17,18 @@ public interface IRepository<T>
     Task<T?> GetByIdAsync(Guid id, bool trackChanges = false);
 
     /// <summary>
+    /// Asynchronously retrieves an entity by its unique identifier with optional related entities included.
+    /// </summary>
+    /// <param name="id">The unique identifier of the entity.</param>
+    /// <param name="trackChanges">Whether to track changes for this entity in the EF context.</param>
+    /// <param name="includes">The related entities to include in the query.</param>
+    /// <returns>The entity if found; otherwise, null.</returns>
+    Task<T?> GetByIdAsync(
+        Guid id,
+        bool trackChanges,
+        params Expression<Func<T, object>>[] includes);
+
+    /// <summary>
     /// Asynchronously retrieves a paged list of all entities.
     /// </summary>
     /// <param name="pageNumber">The page number to retrieve.</param>
@@ -35,6 +47,18 @@ public interface IRepository<T>
     /// <param name="trackChanges">Whether to track changes for these entities.</param>
     /// <returns>A collection of matching entities.</returns>
     Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate, bool trackChanges = false);
+
+    /// <summary>
+    /// Asynchronously finds entities matching the specified predicate with optional related entities included via a LINQ transformer.
+    /// </summary>
+    /// <param name="predicate">The filter criteria.</param>
+    /// <param name="trackChanges">Whether to track changes for these entities.</param>
+    /// <param name="include">A function to transform the queryable (e.g., for including related entities).</param>
+    /// <returns>A collection of matching entities.</returns>
+    Task<IEnumerable<T>> FindAsync(
+        Expression<Func<T, bool>> predicate,
+        bool trackChanges,
+        params Expression<Func<T, object>>[] includes);
 
     /// <summary>
     /// Asynchronously retrieves a paged list of entities matching the specified predicate.

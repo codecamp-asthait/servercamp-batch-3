@@ -343,7 +343,7 @@ namespace Dukaan.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("dukaan.Domain.Entities.Customer", b =>
+            modelBuilder.Entity("Dukaan.Domain.Entities.Customer", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -375,7 +375,7 @@ namespace Dukaan.Infrastructure.Migrations
                     b.ToTable("Customers");
                 });
 
-            modelBuilder.Entity("dukaan.Domain.Entities.Merchant", b =>
+            modelBuilder.Entity("Dukaan.Domain.Entities.Merchant", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -475,20 +475,20 @@ namespace Dukaan.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("dukaan.Domain.Entities.Customer", b =>
+            modelBuilder.Entity("Dukaan.Domain.Entities.Customer", b =>
                 {
                     b.HasOne("Dukaan.Infrastructure.Data.Model.ApplicationUser", null)
                         .WithOne()
-                        .HasForeignKey("dukaan.Domain.Entities.Customer", "ApplicationUserId")
+                        .HasForeignKey("Dukaan.Domain.Entities.Customer", "ApplicationUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("dukaan.Domain.Entities.Merchant", b =>
+            modelBuilder.Entity("Dukaan.Domain.Entities.Merchant", b =>
                 {
                     b.HasOne("Dukaan.Infrastructure.Data.Model.ApplicationUser", null)
                         .WithOne()
-                        .HasForeignKey("dukaan.Domain.Entities.Merchant", "ApplicationUserId")
+                        .HasForeignKey("Dukaan.Domain.Entities.Merchant", "ApplicationUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

@@ -1,7 +1,7 @@
 
 using Dukaan.Domain.Interfaces;
 
-namespace dukaan.Domain.Entities;
+namespace Dukaan.Domain.Entities;
 
 public class Merchant : ITenantEntity
 {

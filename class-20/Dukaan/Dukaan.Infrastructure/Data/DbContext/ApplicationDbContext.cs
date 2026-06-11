@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Dukaan.Infrastructure.Data.Model;
 using Dukaan.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using dukaan.Domain.Entities;
 
 namespace Dukaan.Infrastructure.Data.DbContext;
 
@@ -30,6 +29,8 @@ public class ApplicationDbContext(
     public DbSet<CategorizedProduct> CategorizedProducts => Set<CategorizedProduct>();
     public DbSet<Merchant> Merchants { get; set; }
     public DbSet<Customer> Customers { get; set; }
+    public DbSet<Cart> Carts { get; set; }
+    public DbSet<CartItem> CartItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -54,6 +55,24 @@ public class ApplicationDbContext(
             .HasOne<ApplicationUser>()
             .WithOne()
             .HasForeignKey<Customer>(c => c.ApplicationUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Cart>()
+            .HasOne(c => c.Customer)
+            .WithMany()
+            .HasForeignKey(c => c.CustomerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<CartItem>()
+            .HasOne(ci => ci.Cart)
+            .WithMany(c => c.Items)
+            .HasForeignKey(ci => ci.CartId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<CartItem>()
+            .HasOne(ci => ci.Product)
+            .WithMany()
+            .HasForeignKey(ci => ci.ProductId)
             .OnDelete(DeleteBehavior.Cascade);
 
         var method = typeof(ApplicationDbContext)

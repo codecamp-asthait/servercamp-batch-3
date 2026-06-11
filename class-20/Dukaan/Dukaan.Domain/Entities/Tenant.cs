@@ -23,7 +23,7 @@ public class Tenant
     /// A URL-friendly version of the store name.
     /// </summary>
     /// <remarks>
-    /// This is typically used in the URL (e.g., dukaan.com/my-store) to identify the tenant.
+    /// This is typically used in the URL (e.g., Dukaan.com/my-store) to identify the tenant.
     /// </remarks>
     public string Slug { get; set; } = string.Empty;
 

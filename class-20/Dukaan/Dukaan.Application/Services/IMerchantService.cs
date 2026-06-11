@@ -1,6 +1,6 @@
 using Dukaan.Application.Dtos;
 
-namespace dukaan.Application.Services;
+namespace Dukaan.Application.Services;
 
 public interface IMerchantService
 {

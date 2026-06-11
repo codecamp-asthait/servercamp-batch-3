@@ -1,16 +1,28 @@
-using dukaan.Domain.Entities;
-using dukaan.Application.DTOs;
-using dukaan.Application.Services;
 using Microsoft.AspNetCore.Identity;
 using Dukaan.Application.Interfaces;
 using Dukaan.Infrastructure.Data.Model;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using Dukaan.Domain.Entities;
+using Dukaan.Application.DTOs;
+using Dukaan.Application.Services;
 
 namespace Dukaan.Infrastructure.Services;
 
 public class CustomerService(
     UserManager<ApplicationUser> userManager,
-    IRepository<Customer> customerRepository) : ICustomerService
+    IRepository<Customer> customerRepository,
+    IHttpContextAccessor httpContextAccessor) : ICustomerService
 {
+    public async Task<Guid?> GetCurrentCustomerIdAsync()
+    {
+        var userIdClaim = httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId)) return null;
+
+        var results = await customerRepository.FindAsync(c => c.ApplicationUserId == userId);
+        return results.FirstOrDefault()?.Id;
+    }
+
     public async Task<Guid> RegisterAsync(CustomerRegisterRequest request, Guid tenantId)
     {
         var existing = await userManager.FindByEmailAsync(request.Email);

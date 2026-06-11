@@ -1,7 +1,7 @@
 using Dukaan.Domain.Entities;
-using dukaan.Domain.Entities;
+using Dukaan.Domain.Entities;
 using Dukaan.Application.Dtos;
-using dukaan.Application.Services;
+using Dukaan.Application.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Dukaan.Application.Interfaces;

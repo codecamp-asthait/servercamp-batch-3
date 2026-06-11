@@ -32,6 +32,31 @@ public class Repository<T> : IRepository<T> where T : class
             : await _dbSet.AsNoTracking().FirstOrDefaultAsync(e => EF.Property<Guid>(e, "Id") == id);
 
     /// <summary>
+    /// Asynchronously retrieves an entity by its unique identifier with optional related entities included.
+    /// </summary>
+    /// <param name="id">The unique identifier of the entity.</param>
+    /// <param name="trackChanges">Whether to track changes for this entity in the EF context.</param>
+    /// <param name="includes">The related entities to include in the query.</param>
+    /// <returns>The entity if found; otherwise, null.</returns>
+    public async Task<T?> GetByIdAsync(
+        Guid id,
+        bool trackChanges,
+        params Expression<Func<T, object>>[] includes)
+    {
+        IQueryable<T> query = _dbSet;
+
+        foreach (var include in includes)
+        {
+            var path = ExpressionPathHelper.GetIncludePath(include);
+            if (path != null) query = query.Include(path);
+        }
+
+        return trackChanges
+            ? await query.FirstOrDefaultAsync(e => EF.Property<Guid>(e, "Id") == id)
+            : await query.AsNoTracking().FirstOrDefaultAsync(e => EF.Property<Guid>(e, "Id") == id);
+    }
+
+    /// <summary>
     /// Asynchronously retrieves a paged list of all entities.
     /// </summary>
     /// <param name="pageNumber">The page number to retrieve.</param>
@@ -59,6 +84,33 @@ public class Repository<T> : IRepository<T> where T : class
     /// <returns>A collection of matching entities.</returns>
     public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate, bool trackChanges = false) =>
         trackChanges ? await _dbSet.Where(predicate).ToListAsync() : await _dbSet.Where(predicate).AsNoTracking().ToListAsync();
+
+    /// <summary>
+    /// Asynchronously finds entities matching the specified predicate with optional related entities included via LINQ expressions.
+    /// </summary>
+    /// <param name="predicate">The filter criteria.</param>
+    /// <param name="trackChanges">Whether to track changes for these entities.</param>
+    /// <param name="includes">The related entities to include in the query (supports nested collection includes).</param>
+    /// <returns>A collection of matching entities.</returns>
+    public async Task<IEnumerable<T>> FindAsync(
+        Expression<Func<T, bool>> predicate,
+        bool trackChanges,
+        params Expression<Func<T, object>>[] includes)
+    {
+        IQueryable<T> query = _dbSet;
+
+        foreach (var include in includes)
+        {
+            var path = ExpressionPathHelper.GetIncludePath(include);
+            if (path != null) query = query.Include(path);
+        }
+
+        query = query.Where(predicate);
+
+        return trackChanges
+            ? await query.ToListAsync()
+            : await query.AsNoTracking().ToListAsync();
+    }
 
     /// <summary>
     /// Asynchronously retrieves a paged list of entities matching the specified predicate.
@@ -103,7 +155,8 @@ public class Repository<T> : IRepository<T> where T : class
 
         foreach (var include in includes)
         {
-            query = query.Include(include);
+            var path = ExpressionPathHelper.GetIncludePath(include);
+            if (path != null) query = query.Include(path);
         }
 
         query = query.Where(predicate);
