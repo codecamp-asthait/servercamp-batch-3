@@ -2,18 +2,17 @@ using Dukaan.Application.Core.Abstractions;
 using Dukaan.Application.Interfaces;
 using Dukaan.Application.Models;
 using Dukaan.Domain.Entities;
-using Microsoft.AspNetCore.Identity;
 
 namespace Dukaan.Application.Features.Customers.Commands.RegisterCustomer;
 
 public class RegisterCustomerHandler(
-    UserManager<ApplicationUser> userManager,
+    IUserService userService,
     IRepository<Customer> customerRepository)
     : ICommandHandler<RegisterCustomerCommand, Guid>
 {
     public async Task<Guid> Handle(RegisterCustomerCommand request, CancellationToken cancellationToken)
     {
-        var existing = await userManager.FindByEmailAsync(request.Email);
+        var existing = await userService.FindByEmailAsync(request.Email);
         if (existing != null && existing.TenantId == request.TenantId)
             throw new InvalidOperationException("Email already registered in this store.");
 
@@ -29,7 +28,7 @@ public class RegisterCustomerHandler(
                 UserType = UserType.Customer
             };
 
-            var result = await userManager.CreateAsync(user, request.Password);
+            var result = await userService.CreateAsync(user, request.Password);
             if (!result.Succeeded)
                 throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
 

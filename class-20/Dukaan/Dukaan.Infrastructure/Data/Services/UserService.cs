@@ -7,10 +7,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using Dukaan.Application.Interfaces;
-using Dukaan.Infrastructure.Data.Dtos;
 using Dukaan.Application.Models;
 using Microsoft.Extensions.Configuration;
-using Dukaan.Application.DTOs;
 
 namespace Dukaan.Infrastructure.Data.Services;
 
@@ -28,7 +26,7 @@ public class UserService(
 (store, optionsAccessor, passwordHasher, userValidators, passwordValidators, keyNormalizer, errors, services,
     logger), IUserService
 {
-    public async Task<AuthResponseDTO> LoginAsync(LoginRequestDTO request)
+    public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
     {
         var user = await FindByEmailAsync(request.Email)
                    ?? throw new UnauthorizedAccessException("Invalid credentials");
@@ -39,30 +37,25 @@ public class UserService(
         var jwt = GenerateToken(user);
         var minutes = config["jwt:ExpireInMinutes"];
         var expiresAt = DateTime.UtcNow.AddMinutes(double.Parse(minutes!));
-        return new AuthResponseDTO(jwt, expiresAt);
+        return new AuthResponseDto(jwt, expiresAt);
     }
 
-    public async Task<bool> CreateMerchantAsync(MerchantDto merchantDto, string password)
+    public async Task<CustomerAuthResponseDto?> LoginCustomerAsync(CustomerLoginRequestDto request, Guid tenantId)
     {
-        var merchant = new ApplicationUser
-        {
-            UserName = merchantDto.Email,
-            Email = merchantDto.Email,
-            PhoneNumber = merchantDto.PhoneNumber,
-            TenantId = merchantDto.TenantId
-        };
+        var user = await FindByEmailAsync(request.Email);
+        if (user == null || user.TenantId != tenantId || user.UserType != UserType.Customer) return null;
+        if (!await CheckPasswordAsync(user, request.Password)) return null;
 
-        var result = await CreateAsync(merchant, password);
-        return result.Succeeded;
+        return new CustomerAuthResponseDto(GenerateToken(user), user.Email!);
     }
 
     /// <summary>
-    /// Generates a JSON Web Token (JWT) for the specified merchant user.
+    /// Generates a JSON Web Token (JWT) for the specified user.
     /// </summary>
     /// <remarks>The generated token includes claims for the user's ID, email, and tenant ID. The token's
     /// expiration and signing credentials are determined by the current configuration settings. The caller is
     /// responsible for securely storing and transmitting the token.</remarks>
-    /// <param name="user">The merchant user for whom the JWT will be generated. Cannot be null.</param>
+    /// <param name="user">The user for whom the JWT will be generated. Cannot be null.</param>
     /// <returns>A string containing the generated JWT for the specified user.</returns>
     private string GenerateToken(ApplicationUser user)
     {
@@ -84,14 +77,5 @@ public class UserService(
         var handler = new JwtSecurityTokenHandler();
         var securityToken = handler.CreateToken(tokenDescriptor);
         return handler.WriteToken(securityToken);
-    }
-
-    public async Task<CustomerAuthResponse?> LoginCustomerAsync(CustomerLoginRequest request, Guid tenantId)
-    {
-        var user = await FindByEmailAsync(request.Email);
-        if (user == null || user.TenantId != tenantId || user.UserType != UserType.Customer) return null;
-        if (!await CheckPasswordAsync(user, request.Password)) return null;
-
-        return new CustomerAuthResponse(GenerateToken(user), user.Email!);
     }
 }

@@ -1,4 +1,4 @@
-using Dukaan.Application.DTOs;
+using Dukaan.Application.Dtos;
 using Dukaan.Application.Features.Customers.Commands.RegisterCustomer;
 using Dukaan.Application.Features.Tenants.Queries.GetTenantIdFromSlug;
 using Microsoft.AspNetCore.Mvc;
@@ -9,9 +9,9 @@ namespace Dukaan.Host.Controllers;
 public class CustomersController : BaseApiController
 {
     [HttpPost("register")]
-    public async Task<ActionResult<CustomerAuthResponse>> Register(
+    public async Task<IActionResult> Register(
          [FromHeader(Name = "x-tenant-slug")] string tenantSlug,
-         CustomerRegisterRequest request)
+         RegisterCustomerCommand command)
     {
         if (string.IsNullOrWhiteSpace(tenantSlug)) return BadRequest("Store not found.");
 
@@ -20,13 +20,7 @@ public class CustomersController : BaseApiController
 
         try
         {
-            var customerId = await Mediator.Send(new RegisterCustomerCommand(
-                request.Email,
-                request.Password,
-                request.FirstName,
-                request.LastName,
-                request.Phone,
-                tenantId.Value));
+            var customerId = await Mediator.Send(command with { TenantId = tenantId.Value });
             return Created(string.Empty, new { customerId });
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("already registered"))

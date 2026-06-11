@@ -3,12 +3,11 @@ using Dukaan.Application.Features.Merchants.Dtos;
 using Dukaan.Application.Interfaces;
 using Dukaan.Application.Models;
 using Dukaan.Domain.Entities;
-using Microsoft.AspNetCore.Identity;
 
 namespace Dukaan.Application.Features.Merchants.Commands.RegisterMerchant;
 
 public class RegisterMerchantHandler(
-    UserManager<ApplicationUser> userManager,
+    IUserService userService,
     IRepository<Tenant> tenantRepository,
     IRepository<Merchant> merchantRepository)
     : ICommandHandler<RegisterMerchantCommand, RegisterMerchantResponseDto>
@@ -38,7 +37,7 @@ public class RegisterMerchantHandler(
                 UserType = UserType.Merchant
             };
 
-            var result = await userManager.CreateAsync(user, request.Password);
+            var result = await userService.CreateAsync(user, request.Password);
             if (!result.Succeeded)
                 throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
 

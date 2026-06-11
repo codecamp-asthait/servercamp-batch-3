@@ -8,16 +8,9 @@ namespace Dukaan.Host.Controllers;
 public class MerchantsController : BaseApiController
 {
     [HttpPost("register")]
-    public async Task<ActionResult> Register(MerchantRegisterRequest request)
+    public async Task<ActionResult> Register(RegisterMerchantCommand command)
     {
-        var response = await Mediator.Send(new RegisterMerchantCommand(
-            request.Email,
-            request.PhoneNumber,
-            request.Password,
-            request.StoreName,
-            request.Slug,
-            request.Category,
-            request.Country));
+        var response = await Mediator.Send(command);
         return Ok(response);
     }
 }

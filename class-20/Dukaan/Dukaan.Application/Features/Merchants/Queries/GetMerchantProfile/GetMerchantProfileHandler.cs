@@ -1,21 +1,19 @@
 using Dukaan.Application.Core.Abstractions;
 using Dukaan.Application.Features.Merchants.Dtos;
 using Dukaan.Application.Interfaces;
-using Dukaan.Application.Models;
 using Dukaan.Domain.Entities;
-using Microsoft.AspNetCore.Identity;
 
 namespace Dukaan.Application.Features.Merchants.Queries.GetMerchantProfile;
 
 public class GetMerchantProfileHandler(
-    UserManager<ApplicationUser> userManager,
+    IUserService userService,
     IRepository<Merchant> merchantRepository,
     IRepository<Tenant> tenantRepository)
     : IQueryHandler<GetMerchantProfileQuery, MerchantProfileResponseDto?>
 {
     public async Task<MerchantProfileResponseDto?> Handle(GetMerchantProfileQuery request, CancellationToken cancellationToken)
     {
-        var user = await userManager.FindByIdAsync(request.UserId.ToString());
+        var user = await userService.FindByIdAsync(request.UserId.ToString());
         if (user == null) return null;
 
         var merchants = await merchantRepository.FindAsync(m => m.ApplicationUserId == request.UserId);
