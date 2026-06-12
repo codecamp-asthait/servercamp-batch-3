@@ -9,7 +9,8 @@ namespace Dukaan.Application.Features.Merchants.Commands.RegisterMerchant;
 
 public class RegisterMerchantHandler(
     IUserService userService,
-    IRepository<Merchant> repository)
+    IRepository<Merchant> repository,
+    IRepository<Tenant> tenantRepository)
     : ICommandHandler<RegisterMerchantCommand, ErrorOr<MerchantDto>>
 {
     public async Task<ErrorOr<MerchantDto>> Handle(RegisterMerchantCommand request, CancellationToken cancellationToken)
@@ -27,9 +28,23 @@ public class RegisterMerchantHandler(
             var user = await userService.CreateUserAsync(request.Email, request.Password, "Merchant");
             if (user is null) return AuthErrors.IdentityCreationFailed;
 
+            var tenant = new Tenant
+            {
+                Id = Guid.NewGuid(),
+                StoreName = request.StoreName,
+                Slug = request.Slug,
+                Category = "General",
+                Country = "BD",
+                Currency = "BDT",
+                CreatedAt = DateTime.UtcNow
+            };
+            await tenantRepository.AddAsync(tenant);
+            await tenantRepository.SaveChangesAsync();
+
             var merchant = new Merchant
             {
                 ApplicationUserId = user.Id,
+                TenantId = tenant.Id,
                 StoreName = request.StoreName,
                 Slug = request.Slug,
                 Description = request.Description,
