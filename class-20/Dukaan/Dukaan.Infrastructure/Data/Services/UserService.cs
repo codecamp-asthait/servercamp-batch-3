@@ -1,33 +1,40 @@
 using System.Text;
 using System.Security.Claims;
 using Dukaan.Application.Dtos;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using Dukaan.Application.Interfaces;
 using Dukaan.Application.Models;
+using Dukaan.Domain.Entities;
+using Dukaan.Infrastructure.Data.DbContext;
+using Dukaan.Infrastructure.Identity.Interfaces;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 namespace Dukaan.Infrastructure.Data.Services;
 
 public class UserService(
-    IUserStore<ApplicationUser> store,
+    IConfiguration config,
+    ApplicationDbContext context,
     IHttpContextAccessor httpContextAccessor,
-    IOptions<IdentityOptions> optionsAccessor,
-    IPasswordHasher<ApplicationUser> passwordHasher,
-    IEnumerable<IUserValidator<ApplicationUser>> userValidators,
-    IEnumerable<IPasswordValidator<ApplicationUser>> passwordValidators,
-    ILookupNormalizer keyNormalizer,
-    IdentityErrorDescriber errors,
-    IServiceProvider services,
-    ILogger<UserManager<ApplicationUser>> logger,
-    IConfiguration config) : UserManager<ApplicationUser>
-(store, optionsAccessor, passwordHasher, userValidators, passwordValidators, keyNormalizer, errors, services,
-    logger), IUserService
+    IApplicationUserManagerAdapter applicationUserManager) : IUserService
 {
+    public Task<ApplicationUser?> FindByEmailAsync(string email)
+    {
+        return applicationUserManager.FindByEmailAsync(email);
+    }
+
+    public async Task<Customer?> GetCustomerByEmail(string email)
+    {
+        return await (
+            from customer in context.Customers
+            join user in context.Users on customer.ApplicationUserId equals user.Id
+            where user.Email == email
+            select customer
+        ).FirstOrDefaultAsync();
+    }
+    
     public Guid? GetCurrentUserId()
     {
         var userIdClaim = httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -36,10 +43,10 @@ public class UserService(
 
     public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
     {
-        var user = await FindByEmailAsync(request.Email)
-                   ?? throw new UnauthorizedAccessException("Invalid credentials");
+        var user = await applicationUserManager.FindByEmailAsync(request.Email)
+            ?? throw new UnauthorizedAccessException("Invalid credentials");
 
-        var isValid = await CheckPasswordAsync(user, request.Password);
+        var isValid = await applicationUserManager.CheckPasswordAsync(user, request.Password);
         if (!isValid) throw new UnauthorizedAccessException("Invalid credentials");
 
         var jwt = GenerateToken(user);
@@ -48,13 +55,17 @@ public class UserService(
         return new AuthResponseDto(jwt, expiresAt);
     }
 
-    public async Task<CustomerAuthResponseDto?> LoginCustomerAsync(CustomerLoginRequestDto request, Guid tenantId)
+    public async Task<CustomerAuthResponseDto?> LoginCustomerAsync(CustomerLoginRequestDto request)
     {
-        var user = await FindByEmailAsync(request.Email);
-        if (user == null || user.TenantId != tenantId || user.UserType != UserType.Customer) return null;
-        if (!await CheckPasswordAsync(user, request.Password)) return null;
+        var user = await applicationUserManager.FindByEmailAsync(request.Email);
+        if (user == null || user.UserType != UserType.Customer) return null;
+        if (!await applicationUserManager.CheckPasswordAsync(user, request.Password)) return null;
 
-        return new CustomerAuthResponseDto(GenerateToken(user), user.Email!);
+        var jwt = GenerateToken(user);
+        var minutes = config["jwt:ExpireInMinutes"];
+        var expiresAt = DateTime.UtcNow.AddMinutes(double.Parse(minutes!));
+
+        return new CustomerAuthResponseDto(jwt, user.Id, expiresAt);
     }
 
     public async Task<ApplicationUser?> CreateUserAsync(string email, string password, string role)
@@ -66,8 +77,13 @@ public class UserService(
             UserType = Enum.Parse<UserType>(role)
         };
 
-        var result = await CreateAsync(user, password);
+        var result = await applicationUserManager.CreateAsync(user, password);
         return result.Succeeded ? user : null;
+    }
+
+    public async Task<string> GenerateEmailConfirmationTokenAsync(ApplicationUser user)
+    {
+        return await applicationUserManager.GenerateEmailConfirmationTokenAsync(user);
     }
 
     private string GenerateToken(ApplicationUser user)

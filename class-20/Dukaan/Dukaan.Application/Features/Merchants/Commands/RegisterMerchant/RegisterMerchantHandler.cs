@@ -19,16 +19,13 @@ public class RegisterMerchantHandler(
         try
         {
             var existingUser = await userService.FindByEmailAsync(request.Email);
-            if (existingUser is not null)
-                return AuthErrors.EmailAlreadyRegistered;
+            if (existingUser is not null) return AuthErrors.EmailAlreadyRegistered;
 
             var existingMerchant = await repository.FindAsync(m => m.Slug == request.Slug, trackChanges: false);
-            if (existingMerchant.Any())
-                return MerchantErrors.SlugTaken;
+            if (existingMerchant.Any()) return MerchantErrors.SlugTaken;
 
             var user = await userService.CreateUserAsync(request.Email, request.Password, "Merchant");
-            if (user is null)
-                return AuthErrors.IdentityCreationFailed;
+            if (user is null) return AuthErrors.IdentityCreationFailed;
 
             var merchant = new Merchant
             {

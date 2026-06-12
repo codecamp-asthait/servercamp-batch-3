@@ -3,6 +3,7 @@ using Dukaan.Infrastructure.Data.DbContext;
 using Dukaan.Application.Models;
 using Dukaan.Infrastructure.Data.Repositories;
 using Dukaan.Infrastructure.Data.Services;
+using Dukaan.Infrastructure.Identity.Interfaces;
 using Dukaan.Infrastructure.Interceptors;
 using Dukaan.Infrastructure.Services;
 using Dukaan.Infrastructure.Services.Interfaces;
@@ -34,6 +35,8 @@ public static class DependencyInjection
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IApplicationUserManager, IApplicationUserManager>();
+        services.AddScoped<IApplicationUserManagerAdapter, IApplicationUserManagerAdapter>();
 
         services.AddScoped<ITenantProvider, TenantProvider>();
         services.AddHttpContextAccessor();

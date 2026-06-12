@@ -1,5 +1,4 @@
 using Dukaan.Application.Core.Abstractions;
-using Dukaan.Application.Features.Auth;
 using Dukaan.Application.Features.Auth.Dtos;
 using Dukaan.Application.Interfaces;
 using ErrorOr;

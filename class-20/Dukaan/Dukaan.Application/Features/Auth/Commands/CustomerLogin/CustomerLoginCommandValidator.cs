@@ -12,8 +12,5 @@ public class CustomerLoginCommandValidator : AbstractValidator<CustomerLoginComm
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Password is required.");
-
-        RuleFor(x => x.TenantSlug)
-            .NotEmpty().WithMessage("Tenant ID is required.");
     }
 }
