@@ -13,11 +13,12 @@ namespace Dukaan.Host.Controllers;
 public class StorefrontController(
     ITenantProvider tenantProvider) : BaseApiController
 {
-    [HttpGet("{slug}/products")]
+    [HttpGet("products")]
     public async Task<ActionResult<PagedResponse<ProductDto>>> GetProducts(
-        string slug,
+        [FromHeader(Name = "x-tenant-slug")] string? slug,
         [FromQuery] PaginationRequest request)
     {
+        if (string.IsNullOrWhiteSpace(slug)) return NotFound();
         var tenantResult = await Mediator.Send(new GetTenantIdFromSlugQuery(slug));
         if (tenantResult.IsError) return NotFound();
         tenantProvider.SetTenantId(tenantResult.Value!.Value);
@@ -25,9 +26,12 @@ public class StorefrontController(
         return ToActionResult(await Mediator.Send(new GetActiveProductsQuery(request)));
     }
 
-    [HttpGet("{slug}/products/{id}")]
-    public async Task<ActionResult<ProductDto>> GetProduct(string slug, Guid id)
+    [HttpGet("products/{id}")]
+    public async Task<ActionResult<ProductDto>> GetProduct(
+        [FromHeader(Name = "x-tenant-slug")] string? slug, 
+        Guid id)
     {
+        if (string.IsNullOrWhiteSpace(slug)) return NotFound();
         var tenantResult = await Mediator.Send(new GetTenantIdFromSlugQuery(slug));
         if (tenantResult.IsError) return NotFound();
         tenantProvider.SetTenantId(tenantResult.Value!.Value);
@@ -35,12 +39,13 @@ public class StorefrontController(
         return ToActionResult(await Mediator.Send(new GetProductByIdQuery(id)));
     }
 
-    [HttpGet("{slug}/categories/{categoryId}/products")]
+    [HttpGet("categories/{categoryId}/products")]
     public async Task<ActionResult<PagedResponse<ProductDto>>> GetProductsByCategory(
-        string slug,
-        Guid categoryId,
+        [FromHeader(Name = "x-tenant-slug")] string? slug,
+        Guid categoryId, 
         [FromQuery] PaginationRequest request)
     {
+        if (string.IsNullOrWhiteSpace(slug)) return NotFound();
         var tenantResult = await Mediator.Send(new GetTenantIdFromSlugQuery(slug));
         if (tenantResult.IsError) return NotFound();
         tenantProvider.SetTenantId(tenantResult.Value!.Value);
