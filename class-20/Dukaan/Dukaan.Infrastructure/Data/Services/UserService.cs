@@ -25,14 +25,31 @@ public class UserService(
         return applicationUserManager.FindByEmailAsync(email);
     }
 
-    public async Task<Customer?> GetCustomerByEmail(string email)
+    public async Task<(Merchant Merchant, ApplicationUser User)?> GetMerchantByEmailAsync(string email)
     {
-        return await (
+        var result = await (
+            from merchant in context.Merchants
+            join user in context.Users on merchant.ApplicationUserId equals user.Id
+            where user.Email == email && user.UserType == UserType.Merchant
+            select new { merchant, user }
+        ).FirstOrDefaultAsync();
+
+        if (result is null) return null;
+        return (result.merchant, result.user);
+    }
+
+
+    public async Task<(Customer Customer, ApplicationUser User)?> GetCustomerByEmailAsync(string email)
+    {
+        var result = await (
             from customer in context.Customers
             join user in context.Users on customer.ApplicationUserId equals user.Id
-            where user.Email == email
-            select customer
+            where user.Email == email && user.UserType == UserType.Customer
+            select new { customer, user }
         ).FirstOrDefaultAsync();
+
+        if (result is null) return null;
+        return (result.customer, result.user);
     }
     
     public Guid? GetCurrentUserId()
@@ -41,13 +58,14 @@ public class UserService(
         return Guid.TryParse(userIdClaim, out var userId) ? userId : null;
     }
 
-    public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
+    public async Task<AuthResponseDto?> LoginMerchantAsync(LoginRequestDto request)
     {
-        var user = await applicationUserManager.FindByEmailAsync(request.Email)
-            ?? throw new UnauthorizedAccessException("Invalid credentials");
+        var result = await GetMerchantByEmailAsync(request.Email);
+        if (result is null) return null;
 
+        var user = result.Value.User;
         var isValid = await applicationUserManager.CheckPasswordAsync(user, request.Password);
-        if (!isValid) throw new UnauthorizedAccessException("Invalid credentials");
+        if (!isValid) return null;
 
         var jwt = GenerateToken(user);
         var minutes = config["jwt:ExpireInMinutes"];
@@ -57,9 +75,13 @@ public class UserService(
 
     public async Task<CustomerAuthResponseDto?> LoginCustomerAsync(CustomerLoginRequestDto request)
     {
-        var user = await applicationUserManager.FindByEmailAsync(request.Email);
-        if (user == null || user.UserType != UserType.Customer) return null;
-        if (!await applicationUserManager.CheckPasswordAsync(user, request.Password)) return null;
+        var result = await GetCustomerByEmailAsync(request.Email);
+        if (result is null) return null;
+
+
+        var user = result.Value.User;
+        var isValid = await applicationUserManager.CheckPasswordAsync(user, request.Password);
+        if (!isValid) return null;
 
         var jwt = GenerateToken(user);
         var minutes = config["jwt:ExpireInMinutes"];
@@ -79,11 +101,6 @@ public class UserService(
 
         var result = await applicationUserManager.CreateAsync(user, password);
         return result.Succeeded ? user : null;
-    }
-
-    public async Task<string> GenerateEmailConfirmationTokenAsync(ApplicationUser user)
-    {
-        return await applicationUserManager.GenerateEmailConfirmationTokenAsync(user);
     }
 
     private string GenerateToken(ApplicationUser user)

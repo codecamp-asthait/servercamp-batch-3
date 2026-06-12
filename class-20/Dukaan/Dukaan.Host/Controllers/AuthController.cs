@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Dukaan.Application.Features.Auth.Dtos;
 using Dukaan.Infrastructure.Services.Interfaces;
 using Dukaan.Application.Features.Auth.Commands.Login;
-using Dukaan.Application.Features.Auth.Commands.RegisterUser;
 using Dukaan.Application.Features.Auth.Commands.CustomerLogin;
 using Dukaan.Application.Features.Tenants.Queries.GetTenantIdFromSlug;
 
@@ -25,7 +24,7 @@ public class AuthController(ITenantProvider tenantProvider) : BaseApiController
     public async Task<ActionResult<AuthDto>> Login(LoginCommand command)
         => ToActionResult(await Mediator.Send(command));
 
-    [HttpPost("customer-login")]
+    [HttpPost("customer/login")]
     [AllowAnonymous]
     public async Task<ActionResult<CustomerAuthDto>> CustomerLogin(
         [FromHeader(Name = "x-tenant-slug")] string? slug,
@@ -34,9 +33,4 @@ public class AuthController(ITenantProvider tenantProvider) : BaseApiController
         if (!await ResolveTenant(slug)) return NotFound();
         return ToActionResult(await Mediator.Send(command));
     }
-
-    [HttpPost("register")]
-    [AllowAnonymous]
-    public async Task<ActionResult<AuthDto>> Register(RegisterUserCommand command)
-        => ToActionResult(await Mediator.Send(command));
 }

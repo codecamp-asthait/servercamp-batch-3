@@ -12,7 +12,8 @@ public class LoginHandler(IUserService userService) : ICommandHandler<LoginComma
     {
         try
         {
-            var result = await userService.LoginAsync(new LoginRequestDto(request.Email, request.Password));
+            var merchantLoginDto = new LoginRequestDto(request.Email, request.Password);
+            var result = await userService.LoginMerchantAsync(merchantLoginDto);
             if (result is null) return AuthErrors.InvalidCredentials;
             
             return new AuthDto(result.Token, result.Expiration);

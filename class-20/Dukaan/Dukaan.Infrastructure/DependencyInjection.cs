@@ -1,16 +1,18 @@
-using Dukaan.Application.Interfaces;
-using Dukaan.Infrastructure.Data.DbContext;
 using Dukaan.Application.Models;
-using Dukaan.Infrastructure.Data.Repositories;
-using Dukaan.Infrastructure.Data.Services;
-using Dukaan.Infrastructure.Identity.Interfaces;
-using Dukaan.Infrastructure.Interceptors;
-using Dukaan.Infrastructure.Services;
-using Dukaan.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Dukaan.Application.Interfaces;
+using Dukaan.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
+using Dukaan.Infrastructure.Interceptors;
+using Dukaan.Infrastructure.Data.Services;
+using Dukaan.Infrastructure.Data.DbContext;
+using Dukaan.Infrastructure.Identity.Adapters;
+using Dukaan.Infrastructure.Identity.Services;
+using Dukaan.Infrastructure.Data.Repositories;
 using Microsoft.Extensions.DependencyInjection;
+using Dukaan.Infrastructure.Identity.Interfaces;
+using Dukaan.Infrastructure.Services.Interfaces;
 
 namespace Dukaan.Infrastructure;
 
@@ -35,8 +37,8 @@ public static class DependencyInjection
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
         services.AddScoped<IUserService, UserService>();
-        services.AddScoped<IApplicationUserManager, IApplicationUserManager>();
-        services.AddScoped<IApplicationUserManagerAdapter, IApplicationUserManagerAdapter>();
+        services.AddScoped<IApplicationUserManager, ApplicationUserManager>();
+        services.AddScoped<IApplicationUserManagerAdapter, ApplicationUserManagerAdapter>();
 
         services.AddScoped<ITenantProvider, TenantProvider>();
         services.AddHttpContextAccessor();
