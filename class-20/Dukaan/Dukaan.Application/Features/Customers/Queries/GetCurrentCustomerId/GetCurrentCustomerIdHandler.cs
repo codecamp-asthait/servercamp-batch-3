@@ -16,7 +16,7 @@ public class GetCurrentCustomerIdHandler(IUserService userService, IRepository<C
         if (userId is null)
             return CustomerErrors.NotFound;
 
-        var customer = await repository.FindAsync(c => c.ApplicationUserId == userId, trackChanges: false);
+        var customer = await repository.FindAsync(c => c.ApplicationUserId == userId, trackChanges: false, cancellationToken: cancellationToken);
         return customer.FirstOrDefault()?.Id;
     }
 }

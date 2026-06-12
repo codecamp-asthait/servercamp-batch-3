@@ -17,6 +17,7 @@ public class GetActiveProductsByCategoryHandler(IRepository<Product> repository)
             request.Pagination.PageNumber,
             request.Pagination.PageSize,
             trackChanges: false,
+            cancellationToken,
             p => p.ProductCategories);
 
         var dtos = items.Select(MapToDto).ToList();

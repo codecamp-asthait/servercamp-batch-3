@@ -14,7 +14,7 @@ public class CreateCategoryHandler(IRepository<Category> repository)
     {
         if (request.ParentCategoryId.HasValue)
         {
-            var parent = await repository.GetByIdAsync(request.ParentCategoryId.Value);
+            var parent = await repository.GetByIdAsync(request.ParentCategoryId.Value, cancellationToken: cancellationToken);
             if (parent is null)
                 return CategoryErrors.ParentNotFound;
         }
@@ -26,8 +26,8 @@ public class CreateCategoryHandler(IRepository<Category> repository)
             ParentCategoryId = request.ParentCategoryId
         };
 
-        await repository.AddAsync(category);
-        await repository.SaveChangesAsync();
+        await repository.AddAsync(category, cancellationToken);
+        await repository.SaveChangesAsync(cancellationToken);
 
         return MapToDto(category);
     }

@@ -11,7 +11,7 @@ public class DetachCategoryHandler(IRepository<Product> repository)
 {
     public async Task<ErrorOr<Success>> Handle(DetachCategoryCommand request, CancellationToken cancellationToken)
     {
-        var product = await repository.GetByIdAsync(request.ProductId);
+        var product = await repository.GetByIdAsync(request.ProductId, cancellationToken: cancellationToken);
         
         if (product is null)
             return ProductErrors.NotFound;
@@ -22,7 +22,7 @@ public class DetachCategoryHandler(IRepository<Product> repository)
         if (productCategory is not null)
         {
             product.ProductCategories.Remove(productCategory);
-            await repository.SaveChangesAsync();
+            await repository.SaveChangesAsync(cancellationToken);
         }
 
         return Result.Success;

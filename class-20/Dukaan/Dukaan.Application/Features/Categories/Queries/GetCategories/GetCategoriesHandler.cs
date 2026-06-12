@@ -16,7 +16,8 @@ public class GetCategoriesHandler(IRepository<Category> repository)
             c => true,
             request.Pagination.PageNumber,
             request.Pagination.PageSize,
-            trackChanges: false);
+            trackChanges: false,
+            cancellationToken: cancellationToken);
 
         var dtos = items.Select(MapToDto).ToList();
         return new PagedResponse<CategoryDto>(dtos, totalCount, request.Pagination.PageNumber, request.Pagination.PageSize);

@@ -11,7 +11,7 @@ public class DeleteCategoryHandler(IRepository<Category> repository)
 {
     public async Task<ErrorOr<Deleted>> Handle(DeleteCategoryCommand request, CancellationToken cancellationToken)
     {
-        var category = await repository.GetByIdAsync(request.Id);
+        var category = await repository.GetByIdAsync(request.Id, cancellationToken: cancellationToken);
         
         if (category is null)
             return CategoryErrors.NotFound;
@@ -23,7 +23,7 @@ public class DeleteCategoryHandler(IRepository<Category> repository)
             return CategoryErrors.HasProducts;
 
         repository.Remove(category);
-        await repository.SaveChangesAsync();
+        await repository.SaveChangesAsync(cancellationToken);
 
         return Result.Deleted;
     }

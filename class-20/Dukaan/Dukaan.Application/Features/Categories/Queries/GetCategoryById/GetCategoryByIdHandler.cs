@@ -12,7 +12,7 @@ public class GetCategoryByIdHandler(IRepository<Category> repository)
 {
     public async Task<ErrorOr<CategoryDto?>> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken)
     {
-        var category = await repository.GetByIdAsync(request.Id, trackChanges: false);
+        var category = await repository.GetByIdAsync(request.Id, trackChanges: false, cancellationToken: cancellationToken);
         
         if (category is null)
             return CategoryErrors.NotFound;

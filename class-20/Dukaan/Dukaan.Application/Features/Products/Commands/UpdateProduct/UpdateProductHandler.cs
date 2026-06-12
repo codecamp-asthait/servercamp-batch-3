@@ -11,7 +11,7 @@ public class UpdateProductHandler(IRepository<Product> repository)
 {
     public async Task<ErrorOr<Success>> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
-        var product = await repository.GetByIdAsync(request.Id);
+        var product = await repository.GetByIdAsync(request.Id, cancellationToken: cancellationToken);
         
         if (product is null)
             return ProductErrors.NotFound;
@@ -23,7 +23,7 @@ public class UpdateProductHandler(IRepository<Product> repository)
         product.StockQuantity = request.StockQuantity;
         product.IsActive = request.IsActive;
 
-        await repository.SaveChangesAsync();
+        await repository.SaveChangesAsync(cancellationToken);
 
         return Result.Success;
     }

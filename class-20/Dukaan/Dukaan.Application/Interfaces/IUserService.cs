@@ -7,6 +7,7 @@ namespace Dukaan.Application.Interfaces;
 public interface IUserService
 {
     Guid? GetCurrentUserId();
+    Task<(Tenant tenant, Merchant Merchant, ApplicationUser User)?> GetMerchantByUserIdAsync(Guid userId);
     Task<(Customer Customer, ApplicationUser User)?> GetCustomerByEmailAsync(string email);
     Task<(Merchant Merchant, ApplicationUser User)?> GetMerchantByEmailAsync(string email);
     Task<AuthResponseDto?> LoginMerchantAsync(LoginRequestDto request);

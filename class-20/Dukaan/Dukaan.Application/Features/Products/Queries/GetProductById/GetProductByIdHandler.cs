@@ -12,7 +12,7 @@ public class GetProductByIdHandler(IRepository<Product> repository)
 {
     public async Task<ErrorOr<ProductDto?>> Handle(GetProductByIdQuery request, CancellationToken cancellationToken)
     {
-        var p = await repository.GetByIdAsync(request.Id, trackChanges: false);
+        var p = await repository.GetByIdAsync(request.Id, trackChanges: false, cancellationToken: cancellationToken);
         
         if (p is null)
             return ProductErrors.NotFound;

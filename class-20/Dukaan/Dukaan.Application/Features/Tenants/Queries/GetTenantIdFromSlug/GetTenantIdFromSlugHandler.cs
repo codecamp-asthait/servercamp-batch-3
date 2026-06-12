@@ -11,7 +11,7 @@ public class GetTenantIdFromSlugHandler(IRepository<Tenant> repository)
 {
     public async Task<ErrorOr<Guid?>> Handle(GetTenantIdFromSlugQuery request, CancellationToken cancellationToken)
     {
-        var result = await repository.FindAsync(t => t.Slug == request.Slug, trackChanges: false);
+        var result = await repository.FindAsync(t => t.Slug == request.Slug, trackChanges: false, cancellationToken: cancellationToken);
         var tenant = result.FirstOrDefault();
         
         if (tenant is null)

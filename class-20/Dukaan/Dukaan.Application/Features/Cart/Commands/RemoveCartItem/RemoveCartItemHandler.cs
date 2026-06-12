@@ -27,6 +27,7 @@ public class RemoveCartItemHandler(
         var carts = await cartRepository.FindAsync(
             c => c.CustomerId == customerId,
             trackChanges: true,
+            cancellationToken,
             c => c.Items.Select(i => i.Product));
         var cart = carts.FirstOrDefault();
         
@@ -38,7 +39,7 @@ public class RemoveCartItemHandler(
             return CartErrors.ItemNotFound;
 
         cart.Items.Remove(item);
-        await cartItemRepository.SaveChangesAsync();
+        await cartItemRepository.SaveChangesAsync(cancellationToken);
 
         return MapToDto(cart);
     }

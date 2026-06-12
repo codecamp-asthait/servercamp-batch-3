@@ -26,6 +26,7 @@ public class GetCartHandler(
         var carts = await repository.FindAsync(
             c => c.CustomerId == customerId,
             trackChanges: false,
+            cancellationToken,
             c => c.Items.Select(i => i.Product));
 
         var cart = carts.FirstOrDefault();

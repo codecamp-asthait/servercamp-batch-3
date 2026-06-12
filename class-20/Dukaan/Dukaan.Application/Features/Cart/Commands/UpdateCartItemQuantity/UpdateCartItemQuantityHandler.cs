@@ -29,6 +29,7 @@ public class UpdateCartItemQuantityHandler(
         var carts = await cartRepository.FindAsync(
             c => c.CustomerId == customerId,
             trackChanges: true,
+            cancellationToken,
             c => c.Items.Select(i => i.Product));
         var cart = carts.FirstOrDefault();
         
@@ -39,7 +40,7 @@ public class UpdateCartItemQuantityHandler(
         if (item is null)
             return CartErrors.ItemNotFound;
 
-        var product = await productRepository.GetByIdAsync(request.ProductId);
+        var product = await productRepository.GetByIdAsync(request.ProductId, cancellationToken: cancellationToken);
         if (product is null)
             return ProductErrors.NotFound;
         
@@ -47,7 +48,7 @@ public class UpdateCartItemQuantityHandler(
             return ProductErrors.InsufficientStock;
 
         item.Quantity = request.Quantity;
-        await cartItemRepository.SaveChangesAsync();
+        await cartItemRepository.SaveChangesAsync(cancellationToken);
 
         return MapToDto(cart);
     }

@@ -25,6 +25,20 @@ public class UserService(
         return applicationUserManager.FindByEmailAsync(email);
     }
 
+    public async Task<(Tenant tenant, Merchant Merchant, ApplicationUser User)?> GetMerchantByUserIdAsync(Guid userId)
+    {
+        var result = await (
+            from merchant in context.Merchants
+            join user in context.Users on merchant.ApplicationUserId equals user.Id
+            join tenant in context.Tenants on merchant.TenantId equals tenant.Id
+            where merchant.ApplicationUserId == userId
+            select new { tenant, merchant, user }
+        ).FirstOrDefaultAsync();
+
+        if (result is null) return null;
+        return (result.tenant, result.merchant, result.user);
+    }
+
     public async Task<(Merchant Merchant, ApplicationUser User)?> GetMerchantByEmailAsync(string email)
     {
         var result = await (
@@ -37,7 +51,6 @@ public class UserService(
         if (result is null) return null;
         return (result.merchant, result.user);
     }
-
 
     public async Task<(Customer Customer, ApplicationUser User)?> GetCustomerByEmailAsync(string email)
     {

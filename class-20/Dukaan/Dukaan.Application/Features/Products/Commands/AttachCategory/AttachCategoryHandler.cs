@@ -14,12 +14,12 @@ public class AttachCategoryHandler(
 {
     public async Task<ErrorOr<Success>> Handle(AttachCategoryCommand request, CancellationToken cancellationToken)
     {
-        var product = await productRepository.GetByIdAsync(request.ProductId);
+        var product = await productRepository.GetByIdAsync(request.ProductId, cancellationToken: cancellationToken);
         
         if (product is null)
             return ProductErrors.NotFound;
 
-        var category = await categoryRepository.GetByIdAsync(request.CategoryId);
+        var category = await categoryRepository.GetByIdAsync(request.CategoryId, cancellationToken: cancellationToken);
         
         if (category is null)
             return CategoryErrors.NotFound;
@@ -31,7 +31,7 @@ public class AttachCategoryHandler(
                 ProductId = request.ProductId,
                 CategoryId = request.CategoryId
             });
-            await productRepository.SaveChangesAsync();
+            await productRepository.SaveChangesAsync(cancellationToken);
         }
 
         return Result.Success;

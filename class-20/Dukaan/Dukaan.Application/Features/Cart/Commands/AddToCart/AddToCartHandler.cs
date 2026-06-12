@@ -1,5 +1,4 @@
 using Dukaan.Application.Core.Abstractions;
-using Dukaan.Application.Features.Cart;
 using Dukaan.Application.Features.Cart.Dtos;
 using Dukaan.Application.Features.Customers.Queries.GetCurrentCustomerId;
 using Dukaan.Application.Features.Products;
@@ -28,9 +27,9 @@ public class AddToCartHandler(
         if (customerId is null)
             return CartErrors.CustomerNotFound;
 
-        var cart = await GetOrCreateActiveCartAsync(customerId.Value);
+        var cart = await GetOrCreateActiveCartAsync(customerId.Value, cancellationToken);
         
-        var product = await productRepository.GetByIdAsync(request.ProductId);
+        var product = await productRepository.GetByIdAsync(request.ProductId, cancellationToken: cancellationToken);
         if (product is null)
             return ProductErrors.NotFound;
         
@@ -57,19 +56,20 @@ public class AddToCartHandler(
                 Quantity = request.Quantity,
                 UnitPrice = product.Price
             };
-            await cartItemRepository.AddAsync(newItem);
+            await cartItemRepository.AddAsync(newItem, cancellationToken);
             cart.Items.Add(newItem);
         }
 
-        await cartItemRepository.SaveChangesAsync();
+        await cartItemRepository.SaveChangesAsync(cancellationToken);
         return MapToDto(cart);
     }
 
-    private async Task<CartEntity> GetOrCreateActiveCartAsync(Guid customerId)
+    private async Task<CartEntity> GetOrCreateActiveCartAsync(Guid customerId, CancellationToken cancellationToken)
     {
         var results = await cartRepository.FindAsync(
             c => c.CustomerId == customerId,
             true,
+            cancellationToken,
             c => c.Items.Select(i => i.Product));
 
         var cart = results.FirstOrDefault();
@@ -77,9 +77,9 @@ public class AddToCartHandler(
         if (cart == null)
         {
             cart = new CartEntity { CustomerId = customerId };
-            await cartRepository.AddAsync(cart);
-            await cartRepository.SaveChangesAsync();
-            return await GetOrCreateActiveCartAsync(customerId);
+            await cartRepository.AddAsync(cart, cancellationToken);
+            await cartRepository.SaveChangesAsync(cancellationToken);
+            return await GetOrCreateActiveCartAsync(customerId, cancellationToken);
         }
 
         return cart;

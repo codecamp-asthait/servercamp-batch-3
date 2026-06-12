@@ -1,9 +1,9 @@
-using Dukaan.Application.Core.Abstractions;
-using Dukaan.Application.Features.Auth;
-using Dukaan.Application.Features.Merchants.Dtos;
-using Dukaan.Application.Interfaces;
-using Dukaan.Domain.Entities;
 using ErrorOr;
+using Dukaan.Domain.Entities;
+using Dukaan.Application.Interfaces;
+using Dukaan.Application.Features.Auth;
+using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Merchants.Dtos;
 
 namespace Dukaan.Application.Features.Merchants.Commands.RegisterMerchant;
 
@@ -15,15 +15,15 @@ public class RegisterMerchantHandler(
 {
     public async Task<ErrorOr<MerchantDto>> Handle(RegisterMerchantCommand request, CancellationToken cancellationToken)
     {
-        await repository.BeginTransactionAsync();
+        await repository.BeginTransactionAsync(cancellationToken);
         
         try
         {
             var existingUser = await userService.FindByEmailAsync(request.Email);
             if (existingUser is not null) return AuthErrors.EmailAlreadyRegistered;
 
-            var existingMerchant = await repository.FindAsync(m => m.Slug == request.Slug, trackChanges: false);
-            if (existingMerchant.Any()) return MerchantErrors.SlugTaken;
+            var existingTenant = await tenantRepository.FindFirstAsync(t => t.Slug == request.Slug, trackChanges: false, cancellationToken: cancellationToken);
+            if (existingTenant is not null) return MerchantErrors.SlugTaken;
 
             var user = await userService.CreateUserAsync(request.Email, request.Password, "Merchant");
             if (user is null) return AuthErrors.IdentityCreationFailed;
@@ -38,28 +38,24 @@ public class RegisterMerchantHandler(
                 Currency = "BDT",
                 CreatedAt = DateTime.UtcNow
             };
-            await tenantRepository.AddAsync(tenant);
-            await tenantRepository.SaveChangesAsync();
+            await tenantRepository.AddAsync(tenant, cancellationToken);
+            await tenantRepository.SaveChangesAsync(cancellationToken);
 
             var merchant = new Merchant
             {
                 ApplicationUserId = user.Id,
                 TenantId = tenant.Id,
-                StoreName = request.StoreName,
-                Slug = request.Slug,
-                Description = request.Description,
-                LogoUrl = request.LogoUrl
             };
 
-            await repository.AddAsync(merchant);
-            await repository.SaveChangesAsync();
-            await repository.CommitTransactionAsync();
+            await repository.AddAsync(merchant, cancellationToken);
+            await repository.SaveChangesAsync(cancellationToken);
+            await repository.CommitTransactionAsync(cancellationToken);
 
-            return new MerchantDto(merchant.Id, merchant.StoreName, merchant.Slug, merchant.Description, merchant.LogoUrl);
+            return new MerchantDto(merchant.Id, tenant.StoreName, tenant.Slug);
         }
         catch
         {
-            await repository.RollbackTransactionAsync();
+            await repository.RollbackTransactionAsync(cancellationToken);
             throw;
         }
     }

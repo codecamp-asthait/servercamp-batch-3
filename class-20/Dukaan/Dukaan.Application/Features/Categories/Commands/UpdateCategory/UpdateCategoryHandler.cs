@@ -1,5 +1,4 @@
 using Dukaan.Application.Core.Abstractions;
-using Dukaan.Application.Features.Categories;
 using Dukaan.Application.Interfaces;
 using Dukaan.Domain.Entities;
 using ErrorOr;
@@ -11,7 +10,7 @@ public class UpdateCategoryHandler(IRepository<Category> repository)
 {
     public async Task<ErrorOr<Success>> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken)
     {
-        var category = await repository.GetByIdAsync(request.Id);
+        var category = await repository.GetByIdAsync(request.Id, cancellationToken: cancellationToken);
         
         if (category is null)
             return CategoryErrors.NotFound;
@@ -19,7 +18,7 @@ public class UpdateCategoryHandler(IRepository<Category> repository)
         category.Name = request.Name;
         category.Description = request.Description;
 
-        await repository.SaveChangesAsync();
+        await repository.SaveChangesAsync(cancellationToken);
 
         return Result.Success;
     }

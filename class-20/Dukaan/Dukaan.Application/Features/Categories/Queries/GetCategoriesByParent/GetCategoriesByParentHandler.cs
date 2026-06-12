@@ -13,7 +13,8 @@ public class GetCategoriesByParentHandler(IRepository<Category> repository)
     {
         var categories = await repository.FindAsync(
             c => c.ParentCategoryId == request.ParentId && c.IsActive,
-            trackChanges: false);
+            trackChanges: false,
+            cancellationToken: cancellationToken);
 
         return categories.Select(MapToDto).ToList();
     }

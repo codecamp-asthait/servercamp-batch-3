@@ -27,6 +27,7 @@ public class ClearCartHandler(
         var carts = await cartRepository.FindAsync(
             c => c.CustomerId == customerId,
             trackChanges: true,
+            cancellationToken,
             c => c.Items);
         var cart = carts.FirstOrDefault();
         
@@ -34,7 +35,7 @@ public class ClearCartHandler(
             return CartErrors.NotFound;
 
         cart.Items.Clear();
-        await cartItemRepository.SaveChangesAsync();
+        await cartItemRepository.SaveChangesAsync(cancellationToken);
 
         return MapToDto(cart);
     }
