@@ -16,7 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Dukaan.Host.Controllers;
 
 [Authorize]
-public class ProductController : BaseApiController
+public class ProductsController : BaseApiController
 {
     [HttpGet]
     public async Task<ActionResult<PagedResponse<ProductDto>>> GetAll([FromQuery] PaginationRequest request)

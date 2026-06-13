@@ -4,6 +4,8 @@ using Dukaan.Application.Features.Products.Queries.GetActiveProductsByCategory;
 using Dukaan.Application.Features.Products.Queries.GetProductById;
 using Dukaan.Application.Features.Tenants.Queries.GetTenantIdFromSlug;
 using Dukaan.Application.Dtos;
+using Dukaan.Application.Features.Categories.Dtos;
+using Dukaan.Application.Features.Categories.Queries.GetActiveCategories;
 using Dukaan.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -37,6 +39,19 @@ public class StorefrontController(
         tenantProvider.SetTenantId(tenantResult.Value!.Value);
         
         return ToActionResult(await Mediator.Send(new GetProductByIdQuery(id)));
+    }
+
+    [HttpGet("categories")]
+    public async Task<ActionResult<PagedResponse<CategoryDto>>> GetCategories(
+    [FromHeader(Name = "x-tenant-slug")] string? slug,
+    [FromQuery] PaginationRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(slug)) return NotFound();
+        var tenantResult = await Mediator.Send(new GetTenantIdFromSlugQuery(slug));
+        if (tenantResult.IsError) return NotFound();
+        tenantProvider.SetTenantId(tenantResult.Value!.Value);
+
+        return ToActionResult(await Mediator.Send(new GetActiveCategoriesQuery(request)));
     }
 
     [HttpGet("categories/{categoryId}/products")]

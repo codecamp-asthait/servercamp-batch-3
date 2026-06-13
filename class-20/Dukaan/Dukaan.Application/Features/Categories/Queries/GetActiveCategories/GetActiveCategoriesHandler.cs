@@ -1,24 +1,24 @@
-using Dukaan.Application.Core.Abstractions;
-using Dukaan.Application.Dtos;
-using Dukaan.Application.Features.Categories.Dtos;
-using Dukaan.Application.Interfaces;
-using Dukaan.Domain.Entities;
 using ErrorOr;
+using Dukaan.Domain.Entities;
+using Dukaan.Application.Dtos;
+using Dukaan.Application.Interfaces;
+using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Categories.Dtos;
 
-namespace Dukaan.Application.Features.Categories.Queries.GetCategories;
+namespace Dukaan.Application.Features.Categories.Queries.GetActiveCategories;
 
-public class GetCategoriesHandler(IRepository<Category> repository)
-    : IQueryHandler<GetCategoriesQuery, ErrorOr<PagedResponse<CategoryDto>>>
+public class GetActiveCategoriesHandler(IRepository<Category> repository)
+    : IQueryHandler<GetActiveCategoriesQuery, ErrorOr<PagedResponse<CategoryDto>>>
 {
-    public async Task<ErrorOr<PagedResponse<CategoryDto>>> Handle(GetCategoriesQuery request, CancellationToken cancellationToken)
+    public async Task<ErrorOr<PagedResponse<CategoryDto>>> Handle(GetActiveCategoriesQuery request, CancellationToken cancellationToken)
     {
         var (items, totalCount) = await repository.GetPagedAsync(
-            c => true,
+            c => c.ParentCategoryId == null && c.IsActive,
             request.Pagination.PageNumber,
             request.Pagination.PageSize,
             trackChanges: false,
             cancellationToken: cancellationToken,
-            c => c.SubCategories);
+           c => c.SubCategories);
 
         var dtos = items.Select(MapToDto).ToList();
         return new PagedResponse<CategoryDto>(dtos, totalCount, request.Pagination.PageNumber, request.Pagination.PageSize);
