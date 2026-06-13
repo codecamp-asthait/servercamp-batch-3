@@ -1,6 +1,5 @@
-using Dukaan.Application.Core.Behaviors;
 using FluentValidation;
-using MediatR;
+using Dukaan.Application.Core.Behaviors;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Dukaan.Application;

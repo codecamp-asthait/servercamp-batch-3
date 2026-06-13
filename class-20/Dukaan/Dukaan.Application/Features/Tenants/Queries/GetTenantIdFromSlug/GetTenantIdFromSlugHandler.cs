@@ -1,8 +1,7 @@
-using Dukaan.Application.Core.Abstractions;
-using Dukaan.Application.Features.Tenants;
-using Dukaan.Application.Interfaces;
-using Dukaan.Domain.Entities;
 using ErrorOr;
+using Dukaan.Domain.Entities;
+using Dukaan.Application.Interfaces;
+using Dukaan.Application.Core.Abstractions;
 
 namespace Dukaan.Application.Features.Tenants.Queries.GetTenantIdFromSlug;
 
@@ -13,10 +12,7 @@ public class GetTenantIdFromSlugHandler(IRepository<Tenant> repository)
     {
         var result = await repository.FindAsync(t => t.Slug == request.Slug, trackChanges: false, cancellationToken: cancellationToken);
         var tenant = result.FirstOrDefault();
-        
-        if (tenant is null)
-            return TenantErrors.NotFound;
-        
+        if (tenant is null) return TenantErrors.NotFound;
         return tenant.Id;
     }
 }

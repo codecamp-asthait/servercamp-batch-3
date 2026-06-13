@@ -1,13 +1,13 @@
-using Dukaan.Application.Features.Products.Dtos;
-using Dukaan.Application.Features.Products.Queries.GetActiveProducts;
-using Dukaan.Application.Features.Products.Queries.GetActiveProductsByCategory;
-using Dukaan.Application.Features.Products.Queries.GetProductById;
-using Dukaan.Application.Features.Tenants.Queries.GetTenantIdFromSlug;
 using Dukaan.Application.Dtos;
 using Dukaan.Application.Features.Categories.Dtos;
 using Dukaan.Application.Features.Categories.Queries.GetActiveCategories;
 using Dukaan.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Dukaan.Application.Features.Products.Dtos;
+using Dukaan.Application.Features.Products.Queries.GetProductById;
+using Dukaan.Application.Features.Products.Queries.GetActiveProducts;
+using Dukaan.Application.Features.Tenants.Queries.GetTenantIdFromSlug;
+using Dukaan.Application.Features.Products.Queries.GetActiveProductsByCategory;
 
 namespace Dukaan.Host.Controllers;
 

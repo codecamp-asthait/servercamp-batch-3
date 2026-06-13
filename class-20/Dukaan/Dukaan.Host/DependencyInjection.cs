@@ -1,11 +1,14 @@
-using System.Reflection;
 using System.Text;
-using Dukaan.Host.Middleware;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
+using System.Reflection;
 using Microsoft.OpenApi;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Exporter;
+using Dukaan.Host.Middleware;
+using OpenTelemetry.Resources;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace Dukaan.Host;
 
@@ -91,5 +94,53 @@ public static class DependencyInjection
         app.MapControllers();
 
         return app;
+    }
+
+    public static IServiceCollection AddConfigurations(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddOptions<ObservabilityOptions>()
+            .BindConfiguration(ObservabilityOptions.SectionName)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        return services;
+    }
+
+    public static IServiceCollection AddObservability(this IServiceCollection services)
+    {
+        var serviceProvider = services.BuildServiceProvider();
+        var options = serviceProvider.GetRequiredService<IOptions<ObservabilityOptions>>().Value;
+
+        services.AddOpenTelemetry()
+            .ConfigureResource(resource => resource
+                .AddService(serviceName: options.ServiceName, serviceVersion: "1.0.0")
+                .AddAttributes(new Dictionary<string, object>
+                {
+                    ["deployment.environment"] = options.Environment
+                }))
+            .WithTracing(tracing => tracing
+                .AddAspNetCoreInstrumentation(o => o.RecordException = true)
+                .AddHttpClientInstrumentation()
+                .AddEntityFrameworkCoreInstrumentation(o => o.SetDbStatementForText = true)
+                .AddOtlpExporter(opts =>
+                {
+                    opts.Endpoint = new Uri(options.OtlpEndpoint);
+                    opts.Protocol = OtlpExportProtocol.Grpc;
+                }))
+            .WithMetrics(metrics => metrics
+                .AddMeter("Dukaan")
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
+                .AddRuntimeInstrumentation()
+                .AddProcessInstrumentation()
+                .AddOtlpExporter(opts =>
+                {
+                    opts.Endpoint = new Uri(options.OtlpEndpoint);
+                    opts.Protocol = OtlpExportProtocol.Grpc;
+                }));
+
+        return services;
     }
 }

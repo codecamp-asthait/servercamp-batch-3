@@ -1,9 +1,9 @@
-using Dukaan.Application.Core.Abstractions;
-using Dukaan.Application.Dtos;
-using Dukaan.Application.Features.Products.Dtos;
-using Dukaan.Application.Interfaces;
-using Dukaan.Domain.Entities;
 using ErrorOr;
+using Dukaan.Domain.Entities;
+using Dukaan.Application.Dtos;
+using Dukaan.Application.Interfaces;
+using Dukaan.Application.Core.Abstractions;
+using Dukaan.Application.Features.Products.Dtos;
 
 namespace Dukaan.Application.Features.Products.Queries.GetActiveProducts;
 
