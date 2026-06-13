@@ -3,6 +3,7 @@ using Dukaan.Application.Features.Cart.Dtos;
 using Dukaan.Application.Features.Customers.Queries.GetCurrentCustomerId;
 using Dukaan.Application.Features.Products;
 using Dukaan.Application.Interfaces;
+using Dukaan.Application.Observability;
 using Dukaan.Domain.Entities;
 using ErrorOr;
 using MediatR;
@@ -61,6 +62,10 @@ public class AddToCartHandler(
         }
 
         await cartItemRepository.SaveChangesAsync(cancellationToken);
+
+        DukaanMetrics.CartItemsAdded.Add(request.Quantity, DukaanMetrics.Tag("tenant_id", cart.TenantId));
+        DukaanMetrics.CartItemsAddedValue.Add((long)(request.Quantity * product.Price), DukaanMetrics.Tag("tenant_id", cart.TenantId));
+
         return MapToDto(cart);
     }
 

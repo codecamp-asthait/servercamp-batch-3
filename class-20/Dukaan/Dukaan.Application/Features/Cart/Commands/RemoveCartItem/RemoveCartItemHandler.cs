@@ -3,6 +3,7 @@ using Dukaan.Application.Features.Cart;
 using Dukaan.Application.Features.Cart.Dtos;
 using Dukaan.Application.Features.Customers.Queries.GetCurrentCustomerId;
 using Dukaan.Application.Interfaces;
+using Dukaan.Application.Observability;
 using Dukaan.Domain.Entities;
 using ErrorOr;
 using MediatR;
@@ -40,6 +41,8 @@ public class RemoveCartItemHandler(
 
         cart.Items.Remove(item);
         await cartItemRepository.SaveChangesAsync(cancellationToken);
+
+        DukaanMetrics.CartItemsRemoved.Add(item.Quantity, DukaanMetrics.Tag("tenant_id", cart.TenantId));
 
         return MapToDto(cart);
     }

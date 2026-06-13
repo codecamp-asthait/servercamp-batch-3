@@ -87,7 +87,7 @@ public class UserService(
         var jwt = GenerateToken(user);
         var minutes = config["jwt:ExpireInMinutes"];
         var expiresAt = DateTime.UtcNow.AddMinutes(double.Parse(minutes!));
-        return new AuthResponseDto(jwt, expiresAt);
+        return new AuthResponseDto(jwt, expiresAt, user.TenantId);
     }
 
     public async Task<CustomerAuthResponseDto?> LoginCustomerAsync(CustomerLoginRequestDto request)
@@ -104,7 +104,7 @@ public class UserService(
         var minutes = config["jwt:ExpireInMinutes"];
         var expiresAt = DateTime.UtcNow.AddMinutes(double.Parse(minutes!));
 
-        return new CustomerAuthResponseDto(jwt, user.Id, expiresAt);
+        return new CustomerAuthResponseDto(jwt, user.Id, expiresAt, user.TenantId);
     }
 
     public async Task<ApplicationUser?> CreateUserAsync(string email, string password, string role, Guid? tenantId)

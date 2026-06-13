@@ -4,6 +4,7 @@ using Dukaan.Application.Interfaces;
 using Dukaan.Application.Features.Auth;
 using Dukaan.Application.Core.Abstractions;
 using Dukaan.Application.Features.Merchants.Dtos;
+using Dukaan.Application.Observability;
 
 namespace Dukaan.Application.Features.Merchants.Commands.RegisterMerchant;
 
@@ -51,6 +52,8 @@ public class RegisterMerchantHandler(
             await repository.AddAsync(merchant, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
             await repository.CommitTransactionAsync(cancellationToken);
+
+            DukaanMetrics.MerchantRegistrations.Add(1, DukaanMetrics.Tag("tenant_id", merchant.TenantId));
 
             return new MerchantDto(merchant.Id, tenant.StoreName, tenant.Slug);
         }

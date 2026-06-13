@@ -1,3 +1,3 @@
 namespace Dukaan.Application.Dtos;
 
-public record AuthResponseDto(string Token, DateTime Expiration);
+public record AuthResponseDto(string Token, DateTime Expiration, Guid? TenantId = null);

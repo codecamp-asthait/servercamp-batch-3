@@ -2,6 +2,7 @@ using Dukaan.Application.Core.Abstractions;
 using Dukaan.Application.Features.Auth;
 using Dukaan.Application.Features.Customers.Dtos;
 using Dukaan.Application.Interfaces;
+using Dukaan.Application.Observability;
 using Dukaan.Domain.Entities;
 using ErrorOr;
 
@@ -35,6 +36,8 @@ public class RegisterCustomerHandler(
             await repository.AddAsync(customer);
             await repository.SaveChangesAsync();
             await repository.CommitTransactionAsync();
+
+            DukaanMetrics.CustomerRegistrations.Add(1, DukaanMetrics.Tag("tenant_id", customer.TenantId));
 
             return new CustomerDto(customer.Id, customer.FirstName, customer.LastName, customer.Phone);
         }

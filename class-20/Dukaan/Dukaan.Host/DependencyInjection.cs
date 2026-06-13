@@ -131,6 +131,7 @@ public static class DependencyInjection
                 }))
             .WithMetrics(metrics => metrics
                 .AddMeter("Dukaan")
+                .AddMeter("Dukaan.Application")
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation()
