@@ -25,9 +25,6 @@ public class RegisterMerchantHandler(
             var existingTenant = await tenantRepository.FindFirstAsync(t => t.Slug == request.Slug, trackChanges: false, cancellationToken: cancellationToken);
             if (existingTenant is not null) return MerchantErrors.SlugTaken;
 
-            var user = await userService.CreateUserAsync(request.Email, request.Password, "Merchant");
-            if (user is null) return AuthErrors.IdentityCreationFailed;
-
             var tenant = new Tenant
             {
                 Id = Guid.NewGuid(),
@@ -40,6 +37,10 @@ public class RegisterMerchantHandler(
             };
             await tenantRepository.AddAsync(tenant, cancellationToken);
             await tenantRepository.SaveChangesAsync(cancellationToken);
+
+            var user = await userService.CreateUserAsync(request.Email, request.Password, "Merchant", tenant.Id);
+            if (user is null) return AuthErrors.IdentityCreationFailed;
+
 
             var merchant = new Merchant
             {

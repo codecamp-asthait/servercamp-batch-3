@@ -39,27 +39,31 @@ public class UserService(
         return (result.tenant, result.merchant, result.user);
     }
 
-    public async Task<(Merchant Merchant, ApplicationUser User)?> GetMerchantByEmailAsync(string email)
+    private async Task<(Merchant Merchant, ApplicationUser User)?> GetMerchantByEmailAsync(string email)
     {
-        var result = await (
-            from merchant in context.Merchants
-            join user in context.Users on merchant.ApplicationUserId equals user.Id
+        // Use IgnoreQueryFilters() because during login there is no resolved tenant yet.
+        // The global tenant query filter would otherwise hide users from other tenants.
+        var query = 
+            from user in context.Users.IgnoreQueryFilters()
             where user.Email == email && user.UserType == UserType.Merchant
-            select new { merchant, user }
-        ).FirstOrDefaultAsync();
+            join merchant in context.Merchants.IgnoreQueryFilters() on user.Id equals merchant.ApplicationUserId
+            select new { merchant, user };
+
+        var result = await query.FirstOrDefaultAsync();
 
         if (result is null) return null;
         return (result.merchant, result.user);
     }
 
-    public async Task<(Customer Customer, ApplicationUser User)?> GetCustomerByEmailAsync(string email)
+    private async Task<(Customer Customer, ApplicationUser User)?> GetCustomerByEmailAsync(string email)
     {
-        var result = await (
+        var query = 
             from customer in context.Customers
             join user in context.Users on customer.ApplicationUserId equals user.Id
             where user.Email == email && user.UserType == UserType.Customer
-            select new { customer, user }
-        ).FirstOrDefaultAsync();
+            select new { customer, user };
+
+        var result = await query.FirstOrDefaultAsync();
 
         if (result is null) return null;
         return (result.customer, result.user);
@@ -103,14 +107,19 @@ public class UserService(
         return new CustomerAuthResponseDto(jwt, user.Id, expiresAt);
     }
 
-    public async Task<ApplicationUser?> CreateUserAsync(string email, string password, string role)
+    public async Task<ApplicationUser?> CreateUserAsync(string email, string password, string role, Guid? tenantId)
     {
         var user = new ApplicationUser
         {
             UserName = email,
             Email = email,
-            UserType = Enum.Parse<UserType>(role)
+            UserType = Enum.Parse<UserType>(role),
         };
+
+        if(tenantId.HasValue)
+        {
+            user.TenantId = tenantId.Value;
+        }
 
         var result = await applicationUserManager.CreateAsync(user, password);
         return result.Succeeded ? user : null;
