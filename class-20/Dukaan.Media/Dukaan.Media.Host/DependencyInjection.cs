@@ -1,4 +1,5 @@
 using System.Text;
+using Dukaan.Media.Application;
 using Dukaan.Media.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -11,6 +12,7 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.AddApplicationServices();
         services.AddInfrastructureServices(configuration);
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

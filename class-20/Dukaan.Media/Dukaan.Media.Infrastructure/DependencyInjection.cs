@@ -48,6 +48,7 @@ public static class DependencyInjection
                 bucketName));
 
         services.AddScoped<IImageProcessor, ImageSharpProcessor>();
+        services.AddScoped<IJobDispatcher, HangfireJobDispatcher>();
 
         services.AddHangfire(config => config
             .UsePostgreSqlStorage(o =>
