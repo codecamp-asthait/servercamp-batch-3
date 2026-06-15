@@ -2,8 +2,11 @@ using Dukaan.Media.Application.Interfaces;
 using Dukaan.Media.Infrastructure.Data;
 using Dukaan.Media.Infrastructure.Data.Repositories;
 using Dukaan.Media.Infrastructure.ImageProcessing;
+using Dukaan.Media.Infrastructure.Jobs;
 using Dukaan.Media.Infrastructure.Services;
 using Dukaan.Media.Infrastructure.Storage;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,6 +48,21 @@ public static class DependencyInjection
                 bucketName));
 
         services.AddScoped<IImageProcessor, ImageSharpProcessor>();
+
+        services.AddHangfire(config => config
+            .UsePostgreSqlStorage(o =>
+            {
+                o.UseNpgsqlConnection(configuration.GetConnectionString("DefaultConnection"));
+            },
+            new PostgreSqlStorageOptions { SchemaName = "hangfire_media" }));
+
+        services.AddHangfireServer(options =>
+        {
+            options.WorkerCount = 2;
+            options.Queues = ["media"];
+        });
+
+        services.AddHostedService<HangfireJobScheduler>();
 
         return services;
     }

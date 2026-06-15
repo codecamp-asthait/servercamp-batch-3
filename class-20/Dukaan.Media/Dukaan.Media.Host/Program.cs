@@ -1,4 +1,5 @@
 using Dukaan.Media.Host;
+using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseHangfireDashboard("/hangfire");
 app.MapControllers();
 
 app.Run();
