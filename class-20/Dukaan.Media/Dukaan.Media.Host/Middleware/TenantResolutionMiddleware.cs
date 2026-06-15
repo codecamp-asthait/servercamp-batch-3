@@ -1,0 +1,18 @@
+using Dukaan.Media.Application.Interfaces;
+
+namespace Dukaan.Media.Host.Middleware;
+
+public class TenantResolutionMiddleware(RequestDelegate next)
+{
+    public async Task InvokeAsync(HttpContext context, ITenantProvider tenantProvider)
+    {
+        if (context.User.Identity?.IsAuthenticated == true)
+        {
+            var tenantIdClaim = context.User.FindFirst("tenant_id")?.Value;
+            if (Guid.TryParse(tenantIdClaim, out var tenantId))
+                tenantProvider.SetTenantId(tenantId);
+        }
+
+        await next(context);
+    }
+}

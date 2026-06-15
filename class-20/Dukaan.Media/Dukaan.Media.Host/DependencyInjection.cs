@@ -1,4 +1,7 @@
+using System.Text;
 using Dukaan.Media.Infrastructure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Dukaan.Media.Host;
 
@@ -9,6 +12,21 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.AddInfrastructureServices(configuration);
+
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
+                };
+            });
+
         return services;
     }
 }
