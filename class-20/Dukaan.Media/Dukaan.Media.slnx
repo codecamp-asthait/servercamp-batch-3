@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Dukaan.Media.Domain/Dukaan.Media.Domain.csproj" />
+  <Project Path="Dukaan.Media.Application/Dukaan.Media.Application.csproj" />
+  <Project Path="Dukaan.Media.Infrastructure/Dukaan.Media.Infrastructure.csproj" />
+  <Project Path="Dukaan.Media.Host/Dukaan.Media.Host.csproj" />
+</Solution>
