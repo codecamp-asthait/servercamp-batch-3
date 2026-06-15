@@ -1,10 +1,13 @@
 using Dukaan.Media.Application.Interfaces;
 using Dukaan.Media.Infrastructure.Data;
 using Dukaan.Media.Infrastructure.Data.Repositories;
+using Dukaan.Media.Infrastructure.ImageProcessing;
 using Dukaan.Media.Infrastructure.Services;
+using Dukaan.Media.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Minio;
 
 namespace Dukaan.Media.Infrastructure;
 
@@ -23,6 +26,25 @@ public static class DependencyInjection
                 configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly("Dukaan.Media.Infrastructure"));
         });
+
+        var minioEndpoint = configuration["MinIO:Endpoint"]!;
+        var minioAccessKey = configuration["MinIO:AccessKey"]!;
+        var minioSecretKey = configuration["MinIO:SecretKey"]!;
+        var useSSL = bool.Parse(configuration["MinIO:UseSSL"] ?? "false");
+        var bucketName = configuration["MinIO:BucketName"]!;
+
+        services.AddSingleton<IMinioClient>(sp => new MinioClient()
+            .WithEndpoint(minioEndpoint)
+            .WithCredentials(minioAccessKey, minioSecretKey)
+            .WithSSL(useSSL)
+            .Build());
+
+        services.AddScoped<IStorageProvider>(sp =>
+            new MinioStorageProvider(
+                sp.GetRequiredService<IMinioClient>(),
+                bucketName));
+
+        services.AddScoped<IImageProcessor, ImageSharpProcessor>();
 
         return services;
     }

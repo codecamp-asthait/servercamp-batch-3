@@ -1,0 +1,93 @@
+using Dukaan.Media.Application.Interfaces;
+using ErrorOr;
+using Minio;
+using Minio.DataModel.Args;
+
+namespace Dukaan.Media.Infrastructure.Storage;
+
+public class MinioStorageProvider(IMinioClient minioClient, string bucketName) : IStorageProvider
+{
+    public async Task<ErrorOr<string>> UploadAsync(Stream stream, string key, string contentType)
+    {
+        try
+        {
+            var beArgs = new BucketExistsArgs().WithBucket(bucketName);
+            bool found = await minioClient.BucketExistsAsync(beArgs).ConfigureAwait(false);
+            if (!found)
+            {
+                var mbArgs = new MakeBucketArgs().WithBucket(bucketName);
+                await minioClient.MakeBucketAsync(mbArgs).ConfigureAwait(false);
+            }
+
+            var putObjectArgs = new PutObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(key)
+                .WithStreamData(stream)
+                .WithObjectSize(stream.Length)
+                .WithContentType(contentType);
+
+            await minioClient.PutObjectAsync(putObjectArgs).ConfigureAwait(false);
+
+            return key;
+        }
+        catch (Exception ex)
+        {
+            return Error.Failure("Storage.UploadFailed", ex.Message);
+        }
+    }
+
+    public async Task<ErrorOr<string>> GetPresignedUrlAsync(string key, TimeSpan expiry)
+    {
+        try
+        {
+            var args = new PresignedGetObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(key)
+                .WithExpiry((int)expiry.TotalSeconds);
+
+            string url = await minioClient.PresignedGetObjectAsync(args).ConfigureAwait(false);
+            return url;
+        }
+        catch (Exception ex)
+        {
+            return Error.Failure("Storage.UrlGenerationFailed", ex.Message);
+        }
+    }
+
+    public async Task<ErrorOr<Deleted>> DeleteAsync(string key)
+    {
+        try
+        {
+            var args = new RemoveObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(key);
+
+            await minioClient.RemoveObjectAsync(args).ConfigureAwait(false);
+            return Result.Deleted;
+        }
+        catch (Exception ex)
+        {
+            return Error.Failure("Storage.DeleteFailed", ex.Message);
+        }
+    }
+
+    public async Task<ErrorOr<Stream>> DownloadAsync(string key)
+    {
+        try
+        {
+            var memoryStream = new MemoryStream();
+            var args = new GetObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(key)
+                .WithCallbackStream(s => s.CopyTo(memoryStream));
+
+            await minioClient.GetObjectAsync(args).ConfigureAwait(false);
+            memoryStream.Position = 0;
+            return memoryStream;
+        }
+        catch (Exception ex)
+        {
+            return Error.Failure("Storage.DownloadFailed", ex.Message);
+        }
+    }
+}
