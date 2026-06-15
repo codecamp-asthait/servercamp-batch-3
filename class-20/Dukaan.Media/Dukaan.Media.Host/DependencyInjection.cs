@@ -1,3 +1,5 @@
+using Dukaan.Media.Infrastructure;
+
 namespace Dukaan.Media.Host;
 
 public static class DependencyInjection
@@ -6,7 +8,7 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // TODO: Register all layers in subsequent plans
+        services.AddInfrastructureServices(configuration);
         return services;
     }
 }
