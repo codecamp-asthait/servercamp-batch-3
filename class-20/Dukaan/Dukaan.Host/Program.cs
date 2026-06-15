@@ -30,7 +30,7 @@ builder.Host.UseSerilog((context, configuration) =>
 
 builder.Services
     .AddConfigurations(builder.Configuration)
-    .AddObservability()
+    .AddObservability(builder.Configuration)
     .AddApplicationServices()
     .AddInfrastructureServices(builder.Configuration)
     .AddPresentationServices(builder.Configuration);

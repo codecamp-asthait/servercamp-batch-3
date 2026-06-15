@@ -14,7 +14,6 @@ namespace Dukaan.Host.Controllers;
 public record UpdateQuantityRequest(int Quantity);
 
 [Authorize]
-[Route("api/[controller]")]
 public class CartController(
     ITenantProvider tenantProvider) : BaseApiController
 {

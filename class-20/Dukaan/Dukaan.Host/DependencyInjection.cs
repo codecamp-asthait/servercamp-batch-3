@@ -108,10 +108,10 @@ public static class DependencyInjection
         return services;
     }
 
-    public static IServiceCollection AddObservability(this IServiceCollection services)
+    public static IServiceCollection AddObservability(this IServiceCollection services, IConfiguration configuration)
     {
-        var serviceProvider = services.BuildServiceProvider();
-        var options = serviceProvider.GetRequiredService<IOptions<ObservabilityOptions>>().Value;
+        var options = configuration.GetSection(ObservabilityOptions.SectionName).Get<ObservabilityOptions>()
+            ?? new ObservabilityOptions();
 
         services.AddOpenTelemetry()
             .ConfigureResource(resource => resource

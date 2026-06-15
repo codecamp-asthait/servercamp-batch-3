@@ -13,6 +13,8 @@ using Dukaan.Infrastructure.Data.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 using Dukaan.Infrastructure.Identity.Interfaces;
 using Dukaan.Infrastructure.Services.Interfaces;
+using Dukaan.Infrastructure.Data;
+using Microsoft.Extensions.Hosting;
 
 namespace Dukaan.Infrastructure;
 
@@ -43,6 +45,34 @@ public static class DependencyInjection
         services.AddScoped<ITenantProvider, TenantProvider>();
         services.AddHttpContextAccessor();
 
+        services.AddHostedService<DatabaseMigrationHostedService>();
+
         return services;
     }
+
+    public static async Task SeedDatabaseAsync(IServiceProvider serviceProvider)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        await DbSeeder.SeedAsync(context, userManager);
+    }
+}
+
+public class DatabaseMigrationHostedService(IServiceProvider serviceProvider) : IHostedService
+{
+    public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        Console.WriteLine("Applying database migrations...");
+        await context.Database.MigrateAsync(cancellationToken);
+        Console.WriteLine("Database migrations applied.");
+
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        await DbSeeder.SeedAsync(context, userManager);
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
