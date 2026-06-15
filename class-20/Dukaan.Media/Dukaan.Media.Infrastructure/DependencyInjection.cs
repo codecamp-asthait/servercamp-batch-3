@@ -33,7 +33,7 @@ public static class DependencyInjection
         var useSSL = bool.Parse(configuration["MinIO:UseSSL"] ?? "false");
         var bucketName = configuration["MinIO:BucketName"]!;
 
-        services.AddSingleton<IMinioClient>(sp => new MinioClient()
+        services.AddSingleton(sp => new MinioClient()
             .WithEndpoint(minioEndpoint)
             .WithCredentials(minioAccessKey, minioSecretKey)
             .WithSSL(useSSL)

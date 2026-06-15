@@ -23,11 +23,45 @@ namespace Dukaan.Media.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Dukaan.Media.Domain.Entities.MediaChunk", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ChunkIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("ChunkSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("MediaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MediaId", "ChunkIndex")
+                        .IsUnique();
+
+                    b.ToTable("MediaChunk", "media");
+                });
+
             modelBuilder.Entity("Dukaan.Media.Domain.Entities.MediaMetadata", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<long>("ChunkSize")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("ContentType")
                         .IsRequired()
@@ -56,8 +90,17 @@ namespace Dukaan.Media.Infrastructure.Migrations
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("TotalChunks")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("TotalFileSize")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UploadedChunks")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -101,6 +144,17 @@ namespace Dukaan.Media.Infrastructure.Migrations
                     b.ToTable("MediaVariant", "media");
                 });
 
+            modelBuilder.Entity("Dukaan.Media.Domain.Entities.MediaChunk", b =>
+                {
+                    b.HasOne("Dukaan.Media.Domain.Entities.MediaMetadata", "Media")
+                        .WithMany("Chunks")
+                        .HasForeignKey("MediaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Media");
+                });
+
             modelBuilder.Entity("Dukaan.Media.Domain.Entities.MediaVariant", b =>
                 {
                     b.HasOne("Dukaan.Media.Domain.Entities.MediaMetadata", "Media")
@@ -114,6 +168,8 @@ namespace Dukaan.Media.Infrastructure.Migrations
 
             modelBuilder.Entity("Dukaan.Media.Domain.Entities.MediaMetadata", b =>
                 {
+                    b.Navigation("Chunks");
+
                     b.Navigation("Variants");
                 });
 #pragma warning restore 612, 618
