@@ -5,7 +5,7 @@ using Minio.DataModel.Args;
 
 namespace Dukaan.Media.Infrastructure.Storage;
 
-public class MinioStorageProvider(IMinioClient minioClient, string bucketName) : IStorageProvider
+public class MinioStorageProvider(IMinioClient minioClient, string bucketName, string? externalEndpoint = null, bool useSSL = false) : IStorageProvider
 {
     public async Task<ErrorOr<string>> UploadAsync(Stream stream, string key, string contentType)
     {
@@ -103,6 +103,14 @@ public class MinioStorageProvider(IMinioClient minioClient, string bucketName) :
                 .WithExpiry((int)expiry.TotalSeconds);
 
             string url = await minioClient.PresignedGetObjectAsync(args).ConfigureAwait(false);
+
+            if (!string.IsNullOrEmpty(externalEndpoint))
+            {
+                var scheme = useSSL ? "https" : "http";
+                var uri = new Uri(url);
+                url = $"{scheme}://{externalEndpoint}{uri.PathAndQuery}";
+            }
+
             return url;
         }
         catch (Exception ex)
@@ -147,6 +155,31 @@ public class MinioStorageProvider(IMinioClient minioClient, string bucketName) :
         {
             return Error.Failure("Storage.DeleteChunksFailed", ex.Message);
         }
+    }
+
+    public async Task SetBucketPublicReadAsync()
+    {
+        await EnsureBucketExistsAsync().ConfigureAwait(false);
+
+        var policy = $$"""
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": ["*"]},
+                    "Action": ["s3:GetObject"],
+                    "Resource": ["arn:aws:s3:::{{bucketName}}/*"]
+                }
+            ]
+        }
+        """;
+
+        var args = new SetPolicyArgs()
+            .WithBucket(bucketName)
+            .WithPolicy(policy);
+
+        await minioClient.SetPolicyAsync(args).ConfigureAwait(false);
     }
 
     public async Task<ErrorOr<Stream>> CombineChunksAsync(List<string> chunkKeys)
