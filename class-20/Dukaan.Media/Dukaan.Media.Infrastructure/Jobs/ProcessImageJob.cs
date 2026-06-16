@@ -49,6 +49,8 @@ public class ProcessImageJob(
             var month = DateTime.UtcNow.Month;
             var basePath = $"media/{media.TenantId}/{year}/{month}/{media.Id}";
 
+            media.ImagePath = basePath;
+
             var variants = new[]
             {
                 ("original", processed.OriginalStream, processed.OriginalWidth, processed.OriginalHeight, processed.OriginalFileSize),

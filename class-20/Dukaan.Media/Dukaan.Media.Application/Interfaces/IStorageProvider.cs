@@ -12,4 +12,5 @@ public interface IStorageProvider
     Task<ErrorOr<Deleted>> DeleteAsync(string key);
     Task<ErrorOr<Deleted>> DeleteChunksAsync(List<string> chunkKeys);
     Task<ErrorOr<Stream>> CombineChunksAsync(List<string> chunkKeys);
+    Task SetBucketPublicReadAsync();
 }

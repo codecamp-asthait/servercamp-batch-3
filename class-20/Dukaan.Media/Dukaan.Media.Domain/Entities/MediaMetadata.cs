@@ -10,6 +10,7 @@ public class MediaMetadata : ITenantEntity
     public string OriginalFileName { get; set; } = string.Empty;
     public string ContentType { get; set; } = string.Empty;
     public string StagingKey { get; set; } = string.Empty;
+    public string? ImagePath { get; set; }
     public MediaStatus Status { get; set; } = MediaStatus.Uploading;
     
     // Chunking fields
