@@ -2,6 +2,7 @@ using Dukaan.Media.Application.Interfaces;
 using Dukaan.Media.Domain.Entities;
 using Dukaan.Media.Domain.Enums;
 using Hangfire;
+using Microsoft.Extensions.Logging;
 
 namespace Dukaan.Media.Infrastructure.Jobs;
 
@@ -10,21 +11,34 @@ public class ProcessImageJob(
     IRepository<MediaChunk> chunkRepository,
     IRepository<MediaVariant> variantRepository,
     IStorageProvider storageProvider,
-    IImageProcessor imageProcessor)
+    IImageProcessor imageProcessor,
+    ITenantProvider tenantProvider,
+    ILogger<ProcessImageJob> logger)
 {
     [AutomaticRetry(Attempts = 3, DelaysInSeconds = [10, 30, 60])]
     [Queue("media")]
-    public async Task ExecuteAsync(Guid mediaId)
+    public async Task ExecuteAsync(Guid mediaId, Guid tenantId)
     {
+        tenantProvider.SetTenantId(tenantId);
+
         var media = await mediaRepository.FindFirstAsync(
             m => m.Id == mediaId,
             trackChanges: true);
 
-        if (media is null || media.Status != MediaStatus.Pending)
-            return;
+        if (media is null)
+        {
+            throw new InvalidOperationException($"Media {mediaId} not found");
+        }
+
+        if (media.Status != MediaStatus.Pending)
+        {
+            throw new InvalidOperationException($"Media {mediaId} status is {media.Status}, expected Pending");
+        }
 
         if (media.UploadedChunks != media.TotalChunks)
-            return;
+        {
+            throw new InvalidOperationException($"Media {mediaId} has {media.UploadedChunks}/{media.TotalChunks} chunks uploaded");
+        }
 
         try
         {

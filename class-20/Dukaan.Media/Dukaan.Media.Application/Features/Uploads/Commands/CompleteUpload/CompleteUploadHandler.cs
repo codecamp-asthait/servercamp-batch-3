@@ -32,7 +32,7 @@ public class CompleteUploadHandler(
         media.UpdatedAt = DateTime.UtcNow;
         await mediaRepository.SaveChangesAsync(cancellationToken);
 
-        jobDispatcher.EnqueueProcessImage(command.MediaId);
+        jobDispatcher.EnqueueProcessImage(command.MediaId, media.TenantId);
 
         return new CompleteUploadResponse(command.MediaId, media.Status);
     }

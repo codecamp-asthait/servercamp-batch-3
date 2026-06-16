@@ -6,6 +6,6 @@ namespace Dukaan.Media.Infrastructure.Services;
 
 public class HangfireJobDispatcher(IBackgroundJobClient backgroundJobClient) : IJobDispatcher
 {
-    public void EnqueueProcessImage(Guid mediaId) =>
-        backgroundJobClient.Enqueue<ProcessImageJob>(job => job.ExecuteAsync(mediaId));
+    public void EnqueueProcessImage(Guid mediaId, Guid tenantId) =>
+        backgroundJobClient.Enqueue<ProcessImageJob>(job => job.ExecuteAsync(mediaId, tenantId));
 }

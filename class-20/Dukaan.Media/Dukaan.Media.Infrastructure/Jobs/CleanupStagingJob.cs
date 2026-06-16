@@ -1,13 +1,14 @@
 using Dukaan.Media.Application.Interfaces;
 using Dukaan.Media.Domain.Entities;
 using Dukaan.Media.Domain.Enums;
+using Dukaan.Media.Infrastructure.Data;
 using Hangfire;
+using Microsoft.EntityFrameworkCore;
 
 namespace Dukaan.Media.Infrastructure.Jobs;
 
 public class CleanupStagingJob(
-    IRepository<MediaMetadata> mediaRepository,
-    IRepository<MediaChunk> chunkRepository,
+    MediaDbContext dbContext,
     IStorageProvider storageProvider)
 {
     [AutomaticRetry(Attempts = 1)]
@@ -15,14 +16,19 @@ public class CleanupStagingJob(
     public async Task ExecuteAsync()
     {
         var cutoff = DateTime.UtcNow.AddHours(-24);
-        var stale = await mediaRepository.FindAsync(
-            m => m.Status == MediaStatus.Uploading && m.CreatedAt < cutoff,
-            trackChanges: true);
+        var stale = await dbContext.MediaMetadata
+            .IgnoreQueryFilters()
+            .Where(m => m.Status == MediaStatus.Uploading && m.CreatedAt < cutoff)
+            .ToListAsync();
 
         foreach (var media in stale)
         {
-            var chunks = await chunkRepository.FindAsync(c => c.MediaId == media.Id);
-            var chunkKeys = chunks.Select(c => c.StorageKey).ToList();
+            var chunkKeys = await dbContext.MediaChunks
+                .IgnoreQueryFilters()
+                .Where(c => c.MediaId == media.Id)
+                .Select(c => c.StorageKey)
+                .ToListAsync();
+
             if (chunkKeys.Count > 0)
                 await storageProvider.DeleteChunksAsync(chunkKeys);
 
@@ -30,6 +36,6 @@ public class CleanupStagingJob(
             media.UpdatedAt = DateTime.UtcNow;
         }
 
-        await mediaRepository.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
     }
 }
