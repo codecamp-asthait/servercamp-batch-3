@@ -148,10 +148,10 @@ services:
       - MinIO__Endpoint=minio:9000
       - MinIO__AccessKey=minioadmin
       - MinIO__SecretKey=minioadmin
-      - Jwt__Key=your-secret-key-here
+      - Jwt__Key=Your_JWT_secret_Key_Your_JWT_secret_Key_Your_JWT_secret_Key
       - Observability__OtlpEndpoint=http://otel-collector:4317
     ports:
-      - "5001:8080"
+      - "5002:8080"
     depends_on:
       postgres:
         condition: service_healthy

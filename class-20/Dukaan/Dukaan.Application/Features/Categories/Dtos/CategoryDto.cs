@@ -7,3 +7,5 @@ public record CategoryDto(
     Guid? ParentCategoryId,
     List<CategoryDto> SubCategories
 );
+
+public record CategoryDropdownDto(Guid Id, string Name, string? Description);
