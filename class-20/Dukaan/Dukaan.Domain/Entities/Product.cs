@@ -38,6 +38,11 @@ public class Product : ITenantEntity
     public string? ImageUrl { get; set; }
 
     /// <summary>
+    /// Gets or sets the pending media ID when an image upload is in progress.
+    /// </summary>
+    public Guid? PendingMediaId { get; set; }
+
+    /// <summary>
     /// Gets or sets the available stock quantity.
     /// </summary>
     public int StockQuantity { get; set; }

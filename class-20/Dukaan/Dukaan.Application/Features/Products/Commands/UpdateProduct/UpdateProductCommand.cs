@@ -8,6 +8,6 @@ public record UpdateProductCommand(
     string Name,
     string Description,
     decimal Price,
-    string? ImageUrl,
+    Guid? PendingMediaId,
     int StockQuantity,
     bool IsActive) : ICommand<ErrorOr<Success>>;

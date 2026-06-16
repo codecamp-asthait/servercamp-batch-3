@@ -6,6 +6,7 @@ public record ProductDto(
     string? Description,
     decimal Price,
     string? ImageUrl,
+    Guid? PendingMediaId,
     int StockQuantity,
     bool IsActive,
     List<Guid> CategoryIds

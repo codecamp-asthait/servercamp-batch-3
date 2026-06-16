@@ -15,6 +15,9 @@ using Dukaan.Infrastructure.Identity.Interfaces;
 using Dukaan.Infrastructure.Services.Interfaces;
 using Dukaan.Infrastructure.Data;
 using Microsoft.Extensions.Hosting;
+using Hangfire;
+using Hangfire.PostgreSql;
+using Dukaan.Infrastructure.Jobs;
 
 namespace Dukaan.Infrastructure;
 
@@ -45,7 +48,30 @@ public static class DependencyInjection
         services.AddScoped<ITenantProvider, TenantProvider>();
         services.AddHttpContextAccessor();
 
+        var mediaServiceBaseUrl = configuration["MediaService:BaseUrl"] ?? "http://dukaan-media:8080";
+        services.AddHttpClient<IMediaService, MediaService>(client =>
+        {
+            client.BaseAddress = new Uri(mediaServiceBaseUrl);
+        });
+
+        services.AddHangfire(config => config
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UsePostgreSqlStorage(o =>
+            {
+                o.UseNpgsqlConnection(configuration.GetConnectionString("DefaultConnection"));
+            },
+            new PostgreSqlStorageOptions { SchemaName = "hangfire" }));
+
+        services.AddHangfireServer(options =>
+        {
+            options.WorkerCount = 2;
+            options.Queues = ["media-resolution"];
+        });
+
         services.AddHostedService<DatabaseMigrationHostedService>();
+        services.AddHostedService<HangfireJobScheduler>();
 
         return services;
     }
@@ -72,6 +98,22 @@ public class DatabaseMigrationHostedService(IServiceProvider serviceProvider) : 
 
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         await DbSeeder.SeedAsync(context, userManager);
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+}
+
+public class HangfireJobScheduler : IHostedService
+{
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        RecurringJob.AddOrUpdate<MediaResolutionJob>(
+            "media-resolution",
+            job => job.ExecuteAsync(),
+            "*/30 * * * * *");
+
+        Console.WriteLine("Hangfire recurring job 'media-resolution' scheduled every 30 seconds.");
+        return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

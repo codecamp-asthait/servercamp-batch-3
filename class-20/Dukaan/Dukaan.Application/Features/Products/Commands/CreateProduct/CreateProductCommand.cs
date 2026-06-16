@@ -8,5 +8,5 @@ public record CreateProductCommand(
     string Name,
     string Description,
     decimal Price,
-    string? ImageUrl,
+    Guid? PendingMediaId,
     int StockQuantity) : ICommand<ErrorOr<ProductDto>>;

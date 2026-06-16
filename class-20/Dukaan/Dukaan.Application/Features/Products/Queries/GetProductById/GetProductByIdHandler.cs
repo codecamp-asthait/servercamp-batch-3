@@ -17,7 +17,7 @@ public class GetProductByIdHandler(IRepository<Product> repository)
         if (p is null)
             return ProductErrors.NotFound;
         
-        return new ProductDto(p.Id, p.Name, p.Description, p.Price, p.ImageUrl, p.StockQuantity, p.IsActive,
+        return new ProductDto(p.Id, p.Name, p.Description, p.Price, p.ImageUrl, p.PendingMediaId, p.StockQuantity, p.IsActive,
             p.ProductCategories.Select(pc => pc.CategoryId).ToList());
     }
 }

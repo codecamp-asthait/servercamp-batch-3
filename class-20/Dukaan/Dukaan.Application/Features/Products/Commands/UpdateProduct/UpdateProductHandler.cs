@@ -19,7 +19,7 @@ public class UpdateProductHandler(IRepository<Product> repository)
         product.Name = request.Name;
         product.Description = request.Description;
         product.Price = request.Price;
-        product.ImageUrl = request.ImageUrl;
+        product.PendingMediaId = request.PendingMediaId;
         product.StockQuantity = request.StockQuantity;
         product.IsActive = request.IsActive;
 

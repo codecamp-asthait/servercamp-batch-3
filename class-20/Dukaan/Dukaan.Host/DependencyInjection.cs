@@ -6,6 +6,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Exporter;
 using Dukaan.Host.Middleware;
 using OpenTelemetry.Resources;
+using Hangfire;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -87,6 +88,11 @@ public static class DependencyInjection
             app.UseSwaggerUI();
             app.MapOpenApi();
         }
+
+        app.UseHangfireDashboard("/hangfire", new DashboardOptions
+        {
+            Authorization = new[] { new HangfireAuthorizationFilter() }
+        });
 
         app.UseHttpsRedirection();
         app.UseAuthentication();

@@ -16,7 +16,7 @@ public class CreateProductHandler(IRepository<Product> repository)
             Name = request.Name,
             Description = request.Description,
             Price = request.Price,
-            ImageUrl = request.ImageUrl,
+            PendingMediaId = request.PendingMediaId,
             StockQuantity = request.StockQuantity
         };
 
@@ -27,6 +27,6 @@ public class CreateProductHandler(IRepository<Product> repository)
     }
 
     private static ProductDto MapToDto(Product p) => new(
-        p.Id, p.Name, p.Description, p.Price, p.ImageUrl, p.StockQuantity, p.IsActive,
+        p.Id, p.Name, p.Description, p.Price, p.ImageUrl, p.PendingMediaId, p.StockQuantity, p.IsActive,
         p.ProductCategories.Select(pc => pc.CategoryId).ToList());
 }
