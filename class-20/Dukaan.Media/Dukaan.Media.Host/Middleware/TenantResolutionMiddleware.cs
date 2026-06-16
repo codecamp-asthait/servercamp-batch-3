@@ -12,6 +12,11 @@ public class TenantResolutionMiddleware(RequestDelegate next)
             if (Guid.TryParse(tenantIdClaim, out var tenantId))
                 tenantProvider.SetTenantId(tenantId);
         }
+        else if (context.Request.Headers.TryGetValue("X-Tenant-Id", out var headerTenantId)
+                 && Guid.TryParse(headerTenantId, out var tenantId))
+        {
+            tenantProvider.SetTenantId(tenantId);
+        }
 
         await next(context);
     }

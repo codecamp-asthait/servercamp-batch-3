@@ -30,20 +30,20 @@ public class MediaResolutionJob(
         {
             try
             {
-                var mediaStatus = await mediaService.GetMediaStatusAsync(product.PendingMediaId!.Value);
+                var mediaStatus = await mediaService.GetMediaStatusAsync(product.PendingMediaId!.Value, product.TenantId);
                 if (mediaStatus is null)
                 {
                     logger.LogWarning("Could not fetch media status for product {ProductId}", product.Id);
                     continue;
                 }
 
-                if (mediaStatus.Status == "Completed" && !string.IsNullOrEmpty(mediaStatus.ImagePath))
+                if (mediaStatus.Status == 2 && !string.IsNullOrEmpty(mediaStatus.ImagePath))
                 {
                     product.ImageUrl = mediaStatus.ImagePath;
                     product.PendingMediaId = null;
                     logger.LogInformation("Resolved media for product {ProductId}", product.Id);
                 }
-                else if (mediaStatus.Status == "Failed")
+                else if (mediaStatus.Status == 3)
                 {
                     product.PendingMediaId = null;
                     logger.LogWarning("Media processing failed for product {ProductId}", product.Id);

@@ -63,7 +63,7 @@ public static class DependencyInjection
             options.AddPolicy("AllowFrontend", policy =>
             {
                 policy
-                    .WithOrigins("http://localhost:3000", "http://localhost:3001")
+                    .WithOrigins("http://localhost:3000", "http://localhost:3001", "http://localhost:5001")
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();

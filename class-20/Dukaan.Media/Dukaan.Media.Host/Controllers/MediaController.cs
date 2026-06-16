@@ -29,6 +29,7 @@ public class MediaController : BaseApiController
         => ToActionResult(await Mediator.Send(new CompleteUploadCommand(mediaId)));
 
     [HttpGet("{id:guid}")]
+    [AllowAnonymous]
     public async Task<ActionResult<MediaMetadataResponse>> Get(Guid id)
     {
         var result = await Mediator.Send(new GetMediaQuery(id));
@@ -36,7 +37,7 @@ public class MediaController : BaseApiController
             return ToActionResult(result);
 
         return result.Value.Status == MediaStatus.Uploading
-            ? Accepted($"/api/v1/media/{id}", result.Value)
+            ? Accepted($"/api/media/{id}", result.Value)
             : Ok(result.Value);
     }
 
