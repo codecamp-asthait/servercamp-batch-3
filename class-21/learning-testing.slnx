@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/learning-testing.todo/">
+    <Project Path="learning-testing.todo/learning-testing.csproj" />
+  </Folder>
+  <Project Path="learning-testing.IntegrationTests/learning-testing.IntegrationTests.csproj" />
+  <Project Path="learning-testing.UnitTests/learning-testing.UnitTests.csproj" />
+</Solution>
