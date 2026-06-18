@@ -137,6 +137,38 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - dukaan-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+
+  notification-api:
+    build:
+      context: ./Dukaan.Notification
+      dockerfile: Dukaan.Notification.Host/Dockerfile
+    ports:
+      - "5003:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=dukaan;Username=postgres;Password=password
+      - Redis__ConnectionString=redis:6379
+      - Jwt__Key=${JWT_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - dukaan-network
+
   dukaan-media:
     build:
       context: ./Dukaan.Media
@@ -170,6 +202,7 @@ volumes:
   prometheus-data:
   grafana-data:
   minio-data:
+  redis-data:
 
 networks:
   dukaan-network:
