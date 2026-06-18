@@ -1,4 +1,4 @@
-version: '3.8'
+name: dukaan
 
 services:
   postgres:
@@ -22,7 +22,7 @@ services:
 
   dukaan-api:
     build:
-      context: .
+      context: ./Dukaan
       dockerfile: Dockerfile
     container_name: dukaan-api
     environment:
@@ -48,7 +48,7 @@ services:
     container_name: dukaan-otel-collector
     command: ["--config=/etc/otel-collector-config.yml"]
     volumes:
-      - ./observability/otel-collector-config.yml:/etc/otel-collector-config.yml
+      - ./Dukaan/observability/otel-collector-config.yml:/etc/otel-collector-config.yml
     ports:
       - "4317:4317"
       - "4318:4318"
@@ -75,7 +75,7 @@ services:
     container_name: dukaan-tempo
     command: -config.file=/etc/tempo.yaml
     volumes:
-      - ./observability/tempo.yaml:/etc/tempo.yaml
+      - ./Dukaan/observability/tempo.yaml:/etc/tempo.yaml
       - tempo-data:/var/tempo
     ports:
       - "3200:3200"
@@ -89,7 +89,7 @@ services:
       - --config.file=/etc/prometheus/prometheus.yml
       - --web.enable-remote-write-receiver
     volumes:
-      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./Dukaan/observability/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
     ports:
       - "9091:9090"
@@ -104,9 +104,9 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
-      - ./observability/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
-      - ./observability/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
-      - ./observability/dashboards:/var/lib/grafana/dashboards
+      - ./Dukaan/observability/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./Dukaan/observability/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./Dukaan/observability/dashboards:/var/lib/grafana/dashboards
       - grafana-data:/var/lib/grafana
     ports:
       - "3001:3000"
@@ -139,8 +139,8 @@ services:
 
   dukaan-media:
     build:
-      context: ../Dukaan.Media
-      dockerfile: Dukaan.Media.Host/Dockerfile
+      context: ./Dukaan.Media
+      dockerfile: Dockerfile
     container_name: dukaan-media
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
