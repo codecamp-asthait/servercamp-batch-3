@@ -1,5 +1,6 @@
 using Dukaan.Application.Models;
 using Dukaan.Domain.Entities;
+using Dukaan.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Dukaan.Infrastructure.Data.DbContext;
@@ -115,13 +116,30 @@ public static class DbSeeder
         if (!result.Succeeded)
             throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
 
-        await context.Customers.AddAsync(new Customer
+        var customer = new Customer
         {
             ApplicationUserId = user.Id,
             TenantId = tenantId,
             FirstName = "Demo",
             LastName = "Customer",
             Phone = "+8801000000000"
+        };
+
+        await context.Customers.AddAsync(customer);
+        await context.SaveChangesAsync();
+
+        await context.Addresses.AddAsync(new Address
+        {
+            CustomerId = customer.Id,
+            TenantId = tenantId,
+            Label = "Home",
+            Type = AddressType.Delivery,
+            Street = "123 Demo Street",
+            City = "Dhaka",
+            District = "Dhaka",
+            PostalCode = "1205",
+            Phone = "+8801000000000",
+            IsDefault = true
         });
         await context.SaveChangesAsync();
 
