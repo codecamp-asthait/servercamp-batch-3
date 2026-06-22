@@ -31,6 +31,7 @@ public class ApplicationDbContext(
     public DbSet<Customer> Customers { get; set; }
     public DbSet<Cart> Carts { get; set; }
     public DbSet<CartItem> CartItems { get; set; }
+    public DbSet<Address> Addresses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -73,6 +74,12 @@ public class ApplicationDbContext(
             .HasOne(ci => ci.Product)
             .WithMany()
             .HasForeignKey(ci => ci.ProductId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Address>()
+            .HasOne(a => a.Customer)
+            .WithMany(c => c.Addresses)
+            .HasForeignKey(a => a.CustomerId)
             .OnDelete(DeleteBehavior.Cascade);
 
         var method = typeof(ApplicationDbContext)
