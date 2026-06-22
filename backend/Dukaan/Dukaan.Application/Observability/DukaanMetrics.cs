@@ -34,6 +34,14 @@ public static class DukaanMetrics
         Meter.CreateCounter<long>("dukaan.auth_failures", unit: "{failure}",
             description: "Number of failed authentication attempts");
 
+    public static Counter<long> OrdersPlaced { get; } =
+        Meter.CreateCounter<long>("dukaan.orders_placed", unit: "{order}",
+            description: "Number of orders placed");
+
+    public static Histogram<double> OrderValue { get; } =
+        Meter.CreateHistogram<double>("dukaan.order_value", unit: "{currency}",
+            description: "Distribution of order total values");
+
     public static KeyValuePair<string, object?> Tag(string key, object? value) =>
         new(key, value);
 }

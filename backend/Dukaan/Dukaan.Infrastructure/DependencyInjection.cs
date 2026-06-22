@@ -18,6 +18,7 @@ using Microsoft.Extensions.Hosting;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Dukaan.Infrastructure.Jobs;
+using StackExchange.Redis;
 
 namespace Dukaan.Infrastructure;
 
@@ -72,6 +73,12 @@ public static class DependencyInjection
 
         services.AddHostedService<DatabaseMigrationHostedService>();
         services.AddHostedService<HangfireJobScheduler>();
+
+        var redisConnectionString = configuration["Redis:ConnectionString"] ?? "localhost:6379";
+        services.AddSingleton<IConnectionMultiplexer>(
+            ConnectionMultiplexer.Connect($"{redisConnectionString},abortConnect=false"));
+        services.AddSingleton<IRedisService, RedisService>();
+        services.AddScoped<IOrderNumberService, OrderNumberService>();
 
         return services;
     }

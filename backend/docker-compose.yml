@@ -30,6 +30,7 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=dukaan;Username=postgres;Password=password
       - MediaService__BaseUrl=http://dukaan-media:8080
+      - Redis__ConnectionString=redis:6379
       - Observability__OtlpEndpoint=http://otel-collector:4317
       - Observability__ServiceName=dukaan-api
       - Observability__Environment=Development
@@ -37,6 +38,8 @@ services:
       - "5001:8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       otel-collector:
         condition: service_started

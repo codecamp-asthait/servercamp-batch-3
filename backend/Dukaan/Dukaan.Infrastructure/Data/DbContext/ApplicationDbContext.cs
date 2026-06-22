@@ -32,6 +32,8 @@ public class ApplicationDbContext(
     public DbSet<Cart> Carts { get; set; }
     public DbSet<CartItem> CartItems { get; set; }
     public DbSet<Address> Addresses { get; set; }
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderItem> OrderItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -81,6 +83,24 @@ public class ApplicationDbContext(
             .WithMany(c => c.Addresses)
             .HasForeignKey(a => a.CustomerId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Order>()
+            .HasOne(o => o.Customer)
+            .WithMany()
+            .HasForeignKey(o => o.CustomerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<OrderItem>()
+            .HasOne(oi => oi.Order)
+            .WithMany(o => o.Items)
+            .HasForeignKey(oi => oi.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Order>()
+            .OwnsOne(o => o.BillingAddress);
+
+        builder.Entity<Order>()
+            .OwnsOne(o => o.DeliveryAddress);
 
         var method = typeof(ApplicationDbContext)
             .GetMethod(nameof(SetQueryFilter), BindingFlags.NonPublic | BindingFlags.Instance);
