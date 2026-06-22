@@ -75,11 +75,8 @@ public class PlaceOrderHandler(
             }
         }
 
-        if (inactiveProducts.Any())
-            return OrderErrors.ProductInactive;
-
-        if (insufficientStockItems.Any())
-            return OrderErrors.InsufficientStock;
+        if (inactiveProducts.Any()) return OrderErrors.ProductInactive;
+        if (insufficientStockItems.Any()) return OrderErrors.InsufficientStock;
 
         try
         {

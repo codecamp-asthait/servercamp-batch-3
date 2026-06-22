@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dukaan.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260622075645_AddOrderPlacement")]
+    [Migration("20260622092440_AddOrderPlacement")]
     partial class AddOrderPlacement
     {
         /// <inheritdoc />
@@ -317,8 +317,8 @@ namespace Dukaan.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("SequenceNumber")
-                        .HasColumnType("integer");
+                    b.Property<long>("SequenceNumber")
+                        .HasColumnType("bigint");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");

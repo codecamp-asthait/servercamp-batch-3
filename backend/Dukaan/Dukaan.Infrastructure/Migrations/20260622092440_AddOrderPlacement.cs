@@ -18,7 +18,7 @@ namespace Dukaan.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
                     CustomerId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SequenceNumber = table.Column<int>(type: "integer", nullable: false),
+                    SequenceNumber = table.Column<long>(type: "bigint", nullable: false),
                     OrderNumber = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     BillingAddress_Street = table.Column<string>(type: "text", nullable: false),

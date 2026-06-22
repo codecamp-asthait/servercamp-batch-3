@@ -314,8 +314,8 @@ namespace Dukaan.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("SequenceNumber")
-                        .HasColumnType("integer");
+                    b.Property<long>("SequenceNumber")
+                        .HasColumnType("bigint");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");

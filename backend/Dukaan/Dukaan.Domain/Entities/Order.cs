@@ -9,7 +9,7 @@ public class Order : ITenantEntity
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }
     public Guid CustomerId { get; set; }
-    public int SequenceNumber { get; set; }
+    public long SequenceNumber { get; set; }
     public string OrderNumber { get; set; } = string.Empty;
     public OrderStatus Status { get; set; }
     public AddressSnapshot BillingAddress { get; set; }
