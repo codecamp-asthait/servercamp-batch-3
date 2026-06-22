@@ -38,10 +38,10 @@ public class AddressesController(
     public async Task<ActionResult<AddressDto>> Update(
         [FromHeader(Name = "x-tenant-slug")] string? slug,
         Guid id,
-        [FromBody] UpdateAddressCommand command)
+        [FromBody] UpdateAddressData data)
     {
         if (!await ResolveTenant(slug)) return NotFound();
-        return ToActionResult(await Mediator.Send(command with { Id = id }));
+        return ToActionResult(await Mediator.Send(new UpdateAddressCommand(id, data)));
     }
 
     [HttpDelete("{id}")]

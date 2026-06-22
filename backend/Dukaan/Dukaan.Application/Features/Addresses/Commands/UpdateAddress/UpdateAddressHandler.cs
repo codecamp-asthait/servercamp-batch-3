@@ -26,12 +26,12 @@ public class UpdateAddressHandler(
 
         if (address.CustomerId != customerId) return AddressErrors.NotOwned;
 
-        address.Label = request.Label;
-        address.Street = request.Street;
-        address.City = request.City;
-        address.District = request.District;
-        address.PostalCode = request.PostalCode;
-        address.Phone = request.Phone;
+        address.Label = request.Data.Label;
+        address.Street = request.Data.Street;
+        address.City = request.Data.City;
+        address.District = request.Data.District;
+        address.PostalCode = request.Data.PostalCode;
+        address.Phone = request.Data.Phone;
 
         repository.Update(address);
         await repository.SaveChangesAsync(cancellationToken);
