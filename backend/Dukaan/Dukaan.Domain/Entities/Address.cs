@@ -16,5 +16,5 @@ public class Address : ITenantEntity
     public string PostalCode { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
     public bool IsDefault { get; set; }
-    public virtual Customer Customer { get; set; } = null!;
+    public virtual Customer Customer { get; set; }
 }
