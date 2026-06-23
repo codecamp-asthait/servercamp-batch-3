@@ -1,37 +1,52 @@
-# Learning Testing — Class 21
+# Learning Testing — Class 22
 
-A .NET Todo API project designed to teach testing concepts — from unit tests with mocks to full integration tests with a real database.
+A .NET Todo API project demonstrating **background job processing** with both `BackgroundService` (IHostedService) and **Hangfire**.
 
 ## Solution Structure
 
 ```
-class-21/
-├── learning-testing.todo/            # Main API application
-│   ├── Controllers/TodosController.cs   # HTTP endpoints
-│   ├── Services/TodoService.cs          # Business logic
-│   ├── Repositories/TodoRepository.cs   # Data access (EF Core)
-│   ├── Models/Todo.cs                   # Domain entity
-│   ├── DTOs/                            # Request/response models
-│   ├── Data/AppDbContext.cs             # EF Core DbContext
-│   └── Program.cs                       # App entry point
-├── learning-testing.UnitTests/        # Unit tests (mocked)
-│   └── Services/TodoServiceTests.cs
-└── learning-testing.IntegrationTests/ # Integration tests (real DB)
-    ├── Controllers/TodosControllerTests.cs
-    └── CustomWebApplicationFactory.cs
+class-22/
+├── learning-testing.todo/                # Main API application
+│   ├── BackgroundServices/               # Background job classes
+│   │   ├── OverDueTodoArchieveJob.cs         # Hangfire recurring job
+│   │   └── OverdueTodoArchieveService.cs     # BackgroundService (alternative)
+│   ├── Controllers/TodosController.cs    # HTTP endpoints
+│   ├── Services/TodoService.cs           # Business logic
+│   ├── Repositories/TodoRepository.cs    # Data access (EF Core)
+│   ├── Models/Todo.cs                    # Domain entity
+│   ├── DTOs/                             # Request/response models
+│   ├── Data/AppDbContext.cs              # EF Core DbContext
+│   ├── Migrations/                       # EF Core database migrations
+│   ├── docs/cron-expressions.md          # Cron schedule reference
+│   └── Program.cs                        # App entry point + Hangfire config
+
 ```
 
 ## Architecture
 
 ```
-Controller → Service → Repository → EF Core → PostgreSQL
-     ↑          ↑            ↑
-  (HTTP)    (business    (data access,
-             logic,       queries)
-             DTO mapping)
+ HTTP Request
+      ↓
+ Controller → Service → Repository → EF Core → PostgreSQL
+      ↑          ↑            ↑
+   (HTTP)    (business    (data access,
+              logic,       queries)
+              DTO mapping)
+
+ Background (Hangfire Server)
+      ↓
+ Recurring Job (Cron.Minutely)
+      ↓
+ OverDueTodoArchieveJob
+      ↓
+ ITodoService.ArchiveOverdueTodos()
+      ↓
+ ITodoRepository.ArchiveOverdueTodosAsync()
+      ↓
+ UPDATE Todos SET IsArchived=true WHERE DueDate < UtcNow
 ```
 
-This is a **layered architecture**. Each layer depends only on the layer below it through interfaces (`ITodoService`, `ITodoRepository`), making the code testable — you can mock any layer in isolation.
+The main API follows a **layered architecture** through interfaces (`ITodoService`, `ITodoRepository`). Hangfire runs as an **in-process background server** that executes the recurring archiving job independently of HTTP requests.
 
 ## Technologies
 
@@ -40,10 +55,8 @@ This is a **layered architecture**. Each layer depends only on the layer below i
 | ASP.NET Core 10 | Web API framework |
 | Entity Framework Core 10 | ORM / data access |
 | PostgreSQL | Database |
-| xUnit | Test framework |
-| Moq | Mocking library (unit tests) |
-| FluentAssertions | Readable assertions |
-| Testcontainers | Docker containers in tests |
+| Hangfire | Background job processing |
+
 | Swagger / OpenAPI | API docs (dev only) |
 
 ## Setup
@@ -66,43 +79,54 @@ cd learning-testing.todo
 dotnet run
 ```
 
-Swagger UI: https://localhost:5001/swagger
+### 3. Available URLs (development)
 
-## Running Tests
+| URL | Purpose |
+|---|---|
+| `http://localhost:5182/api/todos` | Todo REST API |
+| `http://localhost:5182/swagger` | Swagger UI (API documentation) |
+| `http://localhost:5182/hangfire` | Hangfire dashboard (job monitoring) |
+| `https://localhost:7054/api/todos` | Same API over HTTPS |
+
+### 4. Apply EF migrations (if needed)
 
 ```bash
-# All tests
-dotnet test
-
-# Unit tests only
-dotnet test learning-testing.UnitTests
-
-# Integration tests only (requires Docker)
-dotnet test learning-testing.IntegrationTests
+cd learning-testing.todo
+dotnet ef database update
 ```
 
-Integration tests use **Testcontainers** — they will automatically pull and run a PostgreSQL Docker container. Make sure Docker is running.
+## Background Job — Overdue Todo Archiving
 
-## Testing Strategy
+The project includes a **recurring Hangfire job** that automatically archives overdue todos.
 
-### Unit Tests (`TodoServiceTests`)
+### How it works
 
-- Test the service layer in **isolation** using mocked repositories
-- No database needed — fast and reliable
-- Verify business logic: DTO mapping, existence checks, system-set fields (Id, timestamps)
-- Uses **Moq** to simulate repository behavior
+1. **Hangfire server** starts in-process and polls PostgreSQL for due jobs
+2. Every minute (`Cron.Minutely`), `OverDueTodoArchieveJob.ArchiveOverdueTodos()` is enqueued
+3. The job finds all non-archived todos with `DueDate < UtcNow`
+4. Sets `IsArchived = true` and `ArchivedAt = DateTime.UtcNow`
+5. Archived todos are excluded from the default `GET /api/todos` listing
+6. On failure, the job retries up to 3 times (`[AutomaticRetry(Attempts = 3)]`)
 
-### Integration Tests (`TodosControllerTests`)
+### Monitoring
 
-- Test the **full stack** (HTTP → Controller → Service → Repository → Database)
-- Uses `WebApplicationFactory` to create an in-memory test server
-- Uses **Testcontainers** with a real PostgreSQL for realistic DB interactions
-- Tests HTTP status codes, response shapes, and end-to-end flows
+The Hangfire dashboard at `/hangfire` shows:
+- Recurring jobs with their schedule and next run time
+- Completed, failed, and in-progress job history
+- Manual job triggering for testing
+- Retry and deletion of failed jobs
 
-## Key Concepts for Students
+### Alternative: BackgroundService
 
-- **`[Fact]`** — xUnit attribute marking a parameterless test method
-- **AAA Pattern** — Arrange, Act, Assert (separate each with blank lines)
-- **Naming convention** — `MethodName_Scenario_ExpectedBehavior` (e.g., `GetById_ShouldReturn404_WhenNotExists`)
+An `OverdueTodoArchiveService` (traditional `BackgroundService`) is provided as an alternative. It is commented out in `Program.cs`. To switch, disable Hangfire and uncomment `builder.Services.AddHostedService<OverdueTodoArchiveService>()`.
+
+### Cron schedules
+
+See [`docs/cron-expressions.md`](learning-testing.todo/docs/cron-expressions.md) for a comprehensive cron expression reference with 200+ examples.
+
+## Key Concepts
+
 - **DTOs** — separate the API contract from the domain model so they can evolve independently
 - **Dependency Injection** — services receive their dependencies through constructors; the DI container wires everything together in `Program.cs`
+- **BackgroundService** — `IHostedService` that polls every minute in a loop; uses `IServiceScopeFactory` to resolve scoped services
+- **Hangfire** — a background job framework that stores job state in PostgreSQL; provides recurring jobs, retry, and a web dashboard at `/hangfire`

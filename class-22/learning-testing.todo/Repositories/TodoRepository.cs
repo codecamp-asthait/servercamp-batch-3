@@ -42,6 +42,9 @@ public class TodoRepository : ITodoRepository
             query = query.Where(t => t.Priority == filter.Priority.Value);
         }
 
+        // Exclude archived todos from the default listing.
+        query = query.Where(t => !t.IsArchived);
+
         // Switch expression maps the sortBy field name to an OrderBy call.
         query = filter.SortBy?.ToLower() switch
         {
@@ -125,5 +128,27 @@ public class TodoRepository : ITodoRepository
         
         _context.Todos.RemoveRange(todos);
         await _context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Finds all non-archived todos whose DueDate is in the past
+    /// and marks them as archived. This is the core operation called
+    /// by the Hangfire recurring job every minute.
+    /// </summary>
+    public async Task<int> ArchiveOverdueTodosAsync()
+    {
+        var now = DateTime.UtcNow;
+        var overdueTodos = await _context.Todos
+            .Where(t => t.DueDate.HasValue && t.DueDate.Value < now && !t.IsArchived)
+            .ToListAsync();
+
+        foreach (var todo in overdueTodos)
+        {
+            todo.IsArchived = true;
+            todo.ArchivedAt = now;
+        }
+
+        await _context.SaveChangesAsync();
+        return overdueTodos.Count;
     }
 }

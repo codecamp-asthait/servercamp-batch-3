@@ -39,4 +39,11 @@ public interface ITodoService
 
     /// <summary>Deletes multiple todos by their IDs.</summary>
     Task DeleteBulkAsync(IEnumerable<Guid> ids);
+
+    /// <summary>
+    /// Archives all overdue todos (past DueDate, not already archived).
+    /// Delegates to the repository layer. Called by the Hangfire recurring job
+    /// and the optional BackgroundService. Returns the count archived.
+    /// </summary>
+    Task<int> ArchiveOverdueTodos();
 }

@@ -32,4 +32,10 @@ public class TodoResponse
 
     /// <summary>Timestamp when the task was last updated (UTC).</summary>
     public DateTime UpdatedAt { get; set; }
+
+    /// <summary>Whether the task has been archived (soft-deleted).</summary>
+    public bool IsArchived { get; set; }
+
+    /// <summary>Timestamp when the task was archived (UTC), null if not archived.</summary>
+    public DateTime? ArchivedAt { get; set; }
 }

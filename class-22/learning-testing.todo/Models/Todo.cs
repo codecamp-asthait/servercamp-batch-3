@@ -29,6 +29,21 @@ public class Todo
 
     /// <summary>Timestamp when the todo was last updated (UTC).</summary>
     public DateTime UpdatedAt { get; set; }
+
+    /// <summary>
+    /// Whether this todo has been archived (soft-deleted).
+    /// Archived todos are excluded from the default listing
+    /// and are hidden from the main view. Defaults to false.
+    /// The background archiving job sets this to true for overdue items.
+    /// </summary>
+    public bool IsArchived { get; set; }
+
+    /// <summary>
+    /// Timestamp (UTC) when this todo was archived.
+    /// Null if the todo has never been archived.
+    /// Set automatically by the archiving job alongside IsArchived.
+    /// </summary>
+    public DateTime? ArchivedAt { get; set; }
 }
 
 /// <summary>

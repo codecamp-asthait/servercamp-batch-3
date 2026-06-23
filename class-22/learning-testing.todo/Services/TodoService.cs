@@ -163,8 +163,23 @@ public class TodoService : ITodoService
     }
 
     /// <summary>
+    /// Archives all overdue todos by delegating to the repository.
+    /// This method is the entry point called by both the Hangfire job
+    /// and the BackgroundService. It logs the count of archived items.
+    /// </summary>
+    public async Task<int> ArchiveOverdueTodos()
+    {
+        return await _repository.ArchiveOverdueTodosAsync();
+    }
+
+    /// <summary>
     /// Private helper that maps a Todo domain entity to a TodoResponse DTO.
     /// Note that Priority is converted to a string so the API returns "High" not 2.
+    /// </summary>
+    /// <summary>
+    /// Maps a Todo domain entity to a TodoResponse DTO.
+    /// Priority is converted to a string ("Low", "Medium", "High").
+    /// Archive fields are included so consumers can check soft-delete status.
     /// </summary>
     private static TodoResponse MapToResponse(Todo todo)
     {
@@ -177,7 +192,9 @@ public class TodoService : ITodoService
             Priority = todo.Priority.ToString(),
             DueDate = todo.DueDate,
             CreatedAt = todo.CreatedAt,
-            UpdatedAt = todo.UpdatedAt
+            UpdatedAt = todo.UpdatedAt,
+            IsArchived = todo.IsArchived,
+            ArchivedAt = todo.ArchivedAt
         };
     }
 }

@@ -34,4 +34,12 @@ public interface ITodoRepository
 
     /// <summary>Deletes multiple todos by their IDs in one operation.</summary>
     Task DeleteBulkAsync(IEnumerable<Guid> ids);
+
+    /// <summary>
+    /// Archives all non-archived todos whose DueDate is in the past.
+    /// Sets IsArchived = true and ArchivedAt = DateTime.UtcNow for each.
+    /// Called periodically by the scheduled background job (Hangfire).
+    /// Returns the count of todos that were archived.
+    /// </summary>
+    Task<int> ArchiveOverdueTodosAsync();
 }
