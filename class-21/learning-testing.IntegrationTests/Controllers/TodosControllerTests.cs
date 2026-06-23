@@ -7,10 +7,49 @@ using Xunit;
 
 namespace learning_testing.IntegrationTests.Controllers;
 
+/// <summary>
+/// Integration tests for the Todos API endpoints.
+/// Uses <see cref="CustomWebApplicationFactory"/> which spins up a real
+/// PostgreSQL database in Docker via Testcontainers, so these tests
+/// exercise the full stack (controller → service → repository → database).
+///
+/// ─── LEARNING NOTES ──────────────────────────────────────────────────
+///
+/// [Fact] attribute (xUnit):
+///   Marks a method as a test method. xUnit discovers and runs all [Fact]
+///   methods in the test class automatically. Unlike NUnit's [Test] or
+///   MSTest's [TestMethod], [Fact] means "this test has no parameters."
+///   For parameterized tests, use [Theory] + [InlineData] instead.
+///
+/// Naming convention: MethodName_Scenario_ExpectedBehavior
+///   Examples:
+///     Create_ShouldReturn201_WithValidRequest
+///     GetById_ShouldReturn404_WhenNotExists
+///
+/// IClassFixture&lt;T&gt;:
+///   Tells xUnit to create one instance of CustomWebApplicationFactory and
+///   share it across all tests in this class. The factory starts a real
+///   PostgreSQL container (via Testcontainers) before any test and stops
+///   it after all tests finish.
+///
+/// WebApplicationFactory:
+///   ASP.NET Core's built-in test host. CreateClient() returns an
+///   HttpClient that sends requests to an in-memory server — no real
+///   HTTP port needed.
+///
+/// Testcontainers:
+///   Runs Docker containers programmatically. Here we use PostgreSqlContainer
+///   to get a real PostgreSQL instance for realistic integration tests.
+/// ──────────────────────────────────────────────────────────────────────
+/// </summary>
 public class TodosControllerTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
+    /// <summary>
+    /// Constructor receives the factory via IClassFixture.
+    /// CreateClient() returns an HttpClient pre-configured to call the in-memory test server.
+    /// </summary>
     public TodosControllerTests(CustomWebApplicationFactory factory)
     {
         _client = factory.CreateClient();

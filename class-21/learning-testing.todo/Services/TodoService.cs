@@ -4,27 +4,40 @@ using learning_testing.Repositories;
 
 namespace learning_testing.Services;
 
+/// <summary>
+/// Implements the business logic for Todo operations.
+/// Maps between request/response DTOs and the domain model (Todo entity),
+/// enforces existence checks, and delegates persistence to the repository.
+/// </summary>
 public class TodoService : ITodoService
 {
     private readonly ITodoRepository _repository;
 
+    /// <summary>
+    /// Constructor injection — receives the repository from DI.
+    /// Because the dependency is an interface (ITodoRepository),
+    /// the service is decoupled from the actual data access implementation.
+    /// </summary>
     public TodoService(ITodoRepository repository)
     {
         _repository = repository;
     }
 
+    /// <summary>Delegates to repository with filtering/sorting, maps results to response DTOs.</summary>
     public async Task<IEnumerable<TodoResponse>> GetAllAsync(TodoFilter filter)
     {
         var todos = await _repository.GetAllAsync(filter);
         return todos.Select(MapToResponse);
     }
 
+    /// <summary>Searches todos and maps results to response DTOs.</summary>
     public async Task<IEnumerable<TodoResponse>> SearchAsync(string query)
     {
         var todos = await _repository.SearchAsync(query);
         return todos.Select(MapToResponse);
     }
 
+    /// <summary>Fetches a todo by ID or throws if not found.</summary>
     public async Task<TodoResponse> GetByIdAsync(Guid id)
     {
         var todo = await _repository.GetByIdAsync(id);
@@ -35,6 +48,10 @@ public class TodoService : ITodoService
         return MapToResponse(todo);
     }
 
+    /// <summary>
+    /// Maps the CreateTodoRequest (DTO) into a Todo domain entity,
+    /// sets system-managed fields (Id, timestamps), and persists it.
+    /// </summary>
     public async Task<TodoResponse> CreateAsync(CreateTodoRequest request)
     {
         var todo = new Todo
@@ -53,6 +70,7 @@ public class TodoService : ITodoService
         return MapToResponse(created);
     }
 
+    /// <summary>Creates multiple todos in a single operation.</summary>
     public async Task<IEnumerable<TodoResponse>> CreateBulkAsync(IEnumerable<CreateTodoRequest> requests)
     {
         var todos = requests.Select(r => new Todo
@@ -71,6 +89,10 @@ public class TodoService : ITodoService
         return created.Select(MapToResponse);
     }
 
+    /// <summary>
+    /// Updates an existing todo. Loads the entity first (to verify it exists),
+    /// applies changes from the request DTO, and saves.
+    /// </summary>
     public async Task<TodoResponse> UpdateAsync(Guid id, UpdateTodoRequest request)
     {
         var todo = await _repository.GetByIdAsync(id);
@@ -90,6 +112,7 @@ public class TodoService : ITodoService
         return MapToResponse(updated);
     }
 
+    /// <summary>Flips the IsCompleted flag (true → false, false → true).</summary>
     public async Task<TodoResponse> ToggleCompleteAsync(Guid id)
     {
         var todo = await _repository.GetByIdAsync(id);
@@ -105,6 +128,7 @@ public class TodoService : ITodoService
         return MapToResponse(updated);
     }
 
+    /// <summary>Updates only the priority of a todo.</summary>
     public async Task<TodoResponse> UpdatePriorityAsync(Guid id, Priority priority)
     {
         var todo = await _repository.GetByIdAsync(id);
@@ -120,6 +144,7 @@ public class TodoService : ITodoService
         return MapToResponse(updated);
     }
 
+    /// <summary>Deletes a todo, throwing if it doesn't exist.</summary>
     public async Task DeleteAsync(Guid id)
     {
         var todo = await _repository.GetByIdAsync(id);
@@ -131,11 +156,16 @@ public class TodoService : ITodoService
         await _repository.DeleteAsync(id);
     }
 
+    /// <summary>Deletes multiple todos — no existence check needed per item.</summary>
     public async Task DeleteBulkAsync(IEnumerable<Guid> ids)
     {
         await _repository.DeleteBulkAsync(ids);
     }
 
+    /// <summary>
+    /// Private helper that maps a Todo domain entity to a TodoResponse DTO.
+    /// Note that Priority is converted to a string so the API returns "High" not 2.
+    /// </summary>
     private static TodoResponse MapToResponse(Todo todo)
     {
         return new TodoResponse

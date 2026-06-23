@@ -8,11 +8,52 @@ using Xunit;
 
 namespace learning_testing.UnitTests.Services;
 
+/// <summary>
+/// Unit tests for <see cref="TodoService"/>.
+/// Uses Moq to mock <see cref="ITodoRepository"/> so the tests focus purely
+/// on the service layer's business logic and DTO mapping — no database needed.
+///
+/// ─── LEARNING NOTES ──────────────────────────────────────────────────
+///
+/// [Fact] attribute (xUnit):
+///   Marks a method as a test method. xUnit discovers and runs all [Fact]
+///   methods in the test class automatically. Unlike NUnit's [Test] or
+///   MSTest's [TestMethod], [Fact] means "this test has no parameters."
+///   For parameterized tests, use [Theory] + [InlineData] instead.
+///
+/// Naming convention: MethodName_Scenario_ExpectedBehavior
+///   Examples:
+///     CreateAsync_ShouldCreateTodo_WithCorrectProperties
+///     GetByIdAsync_ShouldThrowKeyNotFoundException_WhenNotExists
+///   This makes test output readable: you know exactly what's being tested,
+///   under what condition, and what should happen.
+///
+/// Arrange-Act-Assert (AAA):
+///   Each test follows three sections separated by blank lines:
+///     Arrange   - set up objects, mocks, and inputs
+///     Act       - invoke the method under test
+///     Assert    - verify the result using FluentAssertions
+///
+/// System Under Test (_sut):
+///   The instance being tested. Naming it _sut (instead of _service) keeps
+///   the pattern consistent across all test classes.
+///
+/// Moq:
+///   Mock&lt;ITodoRepository&gt; creates a fake repository. Setup() configures
+///   what it returns; Verify() checks it was called correctly.
+/// ──────────────────────────────────────────────────────────────────────
+/// </summary>
 public class TodoServiceTests
 {
+    /// <summary>Mock repository — records calls and returns configured data.</summary>
     private readonly Mock<ITodoRepository> _mockRepository;
+
+    /// <summary>System Under Test — the TodoService instance being tested.</summary>
     private readonly TodoService _sut;
 
+    /// <summary>
+    /// Setup runs before every test. Creates a fresh mock and SUT so tests are isolated.
+    /// </summary>
     public TodoServiceTests()
     {
         _mockRepository = new Mock<ITodoRepository>();
@@ -42,6 +83,7 @@ public class TodoServiceTests
         result.IsCompleted.Should().BeFalse();
         result.DueDate.Should().Be(new DateTime(2026, 12, 31));
 
+        // Verify the repository received a Todo with expected system-set fields.
         _mockRepository.Verify(r => r.CreateAsync(It.Is<Todo>(t =>
             t.Title == "Test Todo" &&
             t.IsCompleted == false &&
