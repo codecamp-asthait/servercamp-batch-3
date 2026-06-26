@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Package, Tag, LogOut } from "lucide-react";
+import { LayoutDashboard, Package, Tag, ShoppingCart, LogOut } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,6 +18,7 @@ const NAV_LINKS = [
   { label: "Dashboard", href: "/merchant/dashboard", icon: LayoutDashboard },
   { label: "Products", href: "/merchant/products", icon: Package },
   { label: "Categories", href: "/merchant/categories", icon: Tag },
+  { label: "Orders", href: "/merchant/orders", icon: ShoppingCart },
 ];
 
 interface MerchantSidebarProps {

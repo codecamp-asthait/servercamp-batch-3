@@ -11,4 +11,7 @@ public static class OrderErrors
     public static Error InsufficientStock => Error.Validation("Order.InsufficientStock", "One or more products have insufficient stock.");
     public static Error CustomerNotFound => Error.Unauthorized("Order.CustomerNotFound", "Customer context not found.");
     public static Error NotFound => Error.NotFound("Order.NotFound", "Order not found.");
+    public static Error AlreadyConfirmed => Error.Conflict("Order.AlreadyConfirmed", "Order is already confirmed.");
+    public static Error AlreadyCancelled => Error.Conflict("Order.AlreadyCancelled", "Order is already cancelled.");
+    public static Error InvalidStatusTransition => Error.Validation("Order.InvalidStatusTransition", "Invalid status transition.");
 }
