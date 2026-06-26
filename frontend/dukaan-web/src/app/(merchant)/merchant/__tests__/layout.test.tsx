@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import MerchantLayout from "../dashboard/layout";
+import MerchantLayout from "../(protected)/layout";
 
 jest.mock("next/navigation", () => ({
   usePathname: () => "/merchant/dashboard",

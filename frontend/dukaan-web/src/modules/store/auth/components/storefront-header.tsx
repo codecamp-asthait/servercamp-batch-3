@@ -16,6 +16,12 @@ export function StorefrontHeader({ slug }: { slug: string }) {
         {token ? (
           <>
             <span className="text-sm text-zinc-500 hidden sm:block">{email}</span>
+            <Link
+              href={`/store/${slug}/orders`}
+              className="text-sm px-2.5 h-7 inline-flex items-center rounded-lg hover:bg-muted transition-colors"
+            >
+              Orders
+            </Link>
             <Button variant="ghost" size="sm" onClick={logout}>Sign out</Button>
           </>
         ) : (

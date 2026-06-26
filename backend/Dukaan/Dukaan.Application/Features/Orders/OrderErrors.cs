@@ -10,4 +10,5 @@ public static class OrderErrors
     public static Error ProductInactive => Error.Validation("Order.ProductInactive", "One or more products in the cart are no longer active.");
     public static Error InsufficientStock => Error.Validation("Order.InsufficientStock", "One or more products have insufficient stock.");
     public static Error CustomerNotFound => Error.Unauthorized("Order.CustomerNotFound", "Customer context not found.");
+    public static Error NotFound => Error.NotFound("Order.NotFound", "Order not found.");
 }

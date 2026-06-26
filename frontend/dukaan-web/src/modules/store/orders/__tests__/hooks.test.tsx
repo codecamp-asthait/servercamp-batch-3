@@ -32,7 +32,14 @@ describe("orders hooks", () => {
 
   it("useOrders fetches orders list", async () => {
     const mockOrders = {
-      items: [{ id: "order-1", orderNumber: "ORD-000001" }],
+      items: [{
+        id: "order-1",
+        orderNumber: "ORD-000001",
+        status: "Pending" as const,
+        total: 100,
+        itemCount: 2,
+        createdAt: "2026-06-27T10:00:00Z",
+      }],
       totalCount: 1,
       pageNumber: 1,
       pageSize: 10,
@@ -51,7 +58,35 @@ describe("orders hooks", () => {
   });
 
   it("useOrder fetches single order", async () => {
-    const mockOrder = { id: "order-1", orderNumber: "ORD-000001" };
+    const mockOrder = {
+      id: "order-1",
+      orderNumber: "ORD-000001",
+      status: "Pending" as const,
+      billingAddress: {
+        street: "123 Main St",
+        city: "Dhaka",
+        district: "Dhaka",
+        postalCode: "1205",
+        phone: "+8801700000000",
+      },
+      deliveryAddress: {
+        street: "123 Main St",
+        city: "Dhaka",
+        district: "Dhaka",
+        postalCode: "1205",
+        phone: "+8801700000000",
+      },
+      subtotal: 100,
+      total: 100,
+      createdAt: "2026-06-27T10:00:00Z",
+      items: [{
+        productId: "prod-1",
+        productName: "Product 1",
+        unitPrice: 50,
+        quantity: 2,
+        subtotal: 100,
+      }],
+    };
     mockOrdersApi.getOrder.mockResolvedValue(mockOrder);
 
     const { result } = renderHook(
@@ -64,7 +99,17 @@ describe("orders hooks", () => {
   });
 
   it("useCustomerAddresses fetches addresses", async () => {
-    const mockAddresses = [{ id: "addr-1", label: "Home" }];
+    const mockAddresses = [{
+      id: "addr-1",
+      label: "Home",
+      type: "Billing" as const,
+      street: "123 Main St",
+      city: "Dhaka",
+      district: "Dhaka",
+      postalCode: "1205",
+      phone: "+8801700000000",
+      isDefault: true,
+    }];
     mockOrdersApi.getAddresses.mockResolvedValue(mockAddresses);
 
     const { result } = renderHook(() => useCustomerAddresses("store-1", "token-123"), {

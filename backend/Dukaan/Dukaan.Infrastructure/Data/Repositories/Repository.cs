@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Dukaan.Infrastructure.Data.DbContext;
 using Dukaan.Application.Interfaces;
 using System.Linq.Expressions;
+using System.Linq;
 
 namespace Dukaan.Infrastructure.Data.Repositories;
 
@@ -236,6 +237,45 @@ public class Repository<T> : IRepository<T> where T : class
                 .Take(pageSize)
                 .ToListAsync(cancellationToken)
             : await query
+                .AsNoTracking()
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+        return (items, count);
+    }
+
+    /// <summary>
+    /// Asynchronously retrieves a paged list of entities matching the specified predicate,
+    /// ordered by the specified expression, with optional related entities included.
+    /// </summary>
+    /// <param name="predicate">The filter criteria.</param>
+    /// <param name="pageNumber">The page number to retrieve.</param>
+    /// <param name="pageSize">The number of items per page.</param>
+    /// <param name="trackChanges">Whether to track changes for these entities.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="orderBy">An expression to order the results.</param>
+    /// <param name="includes">The related entities to include in the query.</param>
+    /// <returns>A tuple containing the items and the total count of matching entities.</returns>
+    public async Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync(
+        Expression<Func<T, bool>> predicate,
+        int pageNumber,
+        int pageSize,
+        bool trackChanges,
+        CancellationToken cancellationToken,
+        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy,
+        params Expression<Func<T, object>>[] includes)
+    {
+        var query = ApplyIncludes(_dbSet, includes).Where(predicate);
+        var orderedQuery = orderBy(query);
+        var count = await query.CountAsync(cancellationToken);
+
+        var items = trackChanges
+            ? await orderedQuery
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken)
+            : await orderedQuery
                 .AsNoTracking()
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)

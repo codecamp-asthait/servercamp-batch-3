@@ -46,10 +46,11 @@ export function CheckoutView({ slug, token, onBack, onSuccess }: Props) {
         onSuccess: (order) => {
           onSuccess(order.id);
         },
-        onError: (error: HttpError) => {
-          if (error.status === 400) {
+        onError: (error: Error) => {
+          const httpError = error as HttpError;
+          if (httpError.status === 400) {
             toast.error("Your cart is empty or products are unavailable");
-          } else if (error.status === 404) {
+          } else if (httpError.status === 404) {
             toast.error("Selected address no longer exists");
           } else {
             toast.error("Something went wrong, please try again");

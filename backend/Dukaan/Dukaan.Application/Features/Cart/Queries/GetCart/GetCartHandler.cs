@@ -32,7 +32,7 @@ public class GetCartHandler(
         var cart = carts.FirstOrDefault();
         
         if (cart is null)
-            return CartErrors.NotFound;
+            return new CartDto(Guid.Empty, [], 0, 0);
 
         return MapToDto(cart);
     }

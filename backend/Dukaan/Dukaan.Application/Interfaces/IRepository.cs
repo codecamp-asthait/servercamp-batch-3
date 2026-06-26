@@ -132,6 +132,27 @@ public interface IRepository<T>
         params Expression<Func<T, object>>[] includes);
 
     /// <summary>
+    /// Asynchronously retrieves a paged list of entities matching the specified predicate,
+    /// ordered by the specified expression, with optional related entities included.
+    /// </summary>
+    /// <param name="predicate">The filter criteria.</param>
+    /// <param name="pageNumber">The page number to retrieve.</param>
+    /// <param name="pageSize">The number of items per page.</param>
+    /// <param name="trackChanges">Whether to track changes for these entities.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="orderBy">An expression to order the results.</param>
+    /// <param name="includes">The related entities to include in the query.</param>
+    /// <returns>A tuple containing the items and the total count of matching entities.</returns>
+    Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync(
+        Expression<Func<T, bool>> predicate,
+        int pageNumber,
+        int pageSize,
+        bool trackChanges,
+        CancellationToken cancellationToken,
+        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy,
+        params Expression<Func<T, object>>[] includes);
+
+    /// <summary>
     /// Adds a new entity to the repository.
     /// </summary>
     /// <param name="entity">The entity to add.</param>
