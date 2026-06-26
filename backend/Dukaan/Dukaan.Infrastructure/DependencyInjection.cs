@@ -78,6 +78,7 @@ public static class DependencyInjection
         services.AddSingleton<IConnectionMultiplexer>(
             ConnectionMultiplexer.Connect($"{redisConnectionString},abortConnect=false"));
         services.AddSingleton<IRedisService, RedisService>();
+        services.AddSingleton<IEventBus, EventBus>();
         services.AddScoped<IOrderNumberService, OrderNumberService>();
 
         return services;

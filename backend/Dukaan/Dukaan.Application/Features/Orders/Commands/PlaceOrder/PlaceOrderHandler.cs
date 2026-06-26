@@ -7,6 +7,7 @@ using Dukaan.Domain.Entities;
 using Dukaan.Domain.ValueObjects;
 using ErrorOr;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using CartEntity = Dukaan.Domain.Entities.Cart;
 using OrderEntity = Dukaan.Domain.Entities.Order;
 
@@ -18,7 +19,9 @@ public class PlaceOrderHandler(
     IRepository<Address> addressRepository,
     IRepository<Product> productRepository,
     IOrderNumberService orderNumberService,
-    IMediator mediator)
+    IMediator mediator,
+    IEventBus eventBus,
+    ILogger<PlaceOrderHandler> logger)
     : ICommandHandler<PlaceOrderCommand, ErrorOr<OrderDto>>
 {
     public async Task<ErrorOr<OrderDto>> Handle(PlaceOrderCommand request, CancellationToken cancellationToken)
@@ -142,6 +145,21 @@ public class PlaceOrderHandler(
 
             DukaanMetrics.OrdersPlaced.Add(1, DukaanMetrics.Tag("tenant_id", order.TenantId));
             DukaanMetrics.OrderValue.Record((double)subtotal, DukaanMetrics.Tag("tenant_id", order.TenantId));
+
+            try
+            {
+                await eventBus.PublishAsync("order-placed", new Dictionary<string, string>
+                {
+                    ["tenant_id"] = order.TenantId.ToString(),
+                    ["customer_id"] = order.CustomerId.ToString(),
+                    ["order_id"] = order.Id.ToString(),
+                    ["order_display_id"] = order.OrderNumber
+                }, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to publish order-placed event for Order {OrderNumber}", order.OrderNumber);
+            }
 
             return MapToDto(order);
         }

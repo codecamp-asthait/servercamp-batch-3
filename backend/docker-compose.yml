@@ -153,24 +153,25 @@ services:
       interval: 5s
       retries: 5
 
-  # notification-api:
-  #   build:
-  #     context: ./Dukaan.Notification
-  #     dockerfile: Dukaan.Notification.Host/Dockerfile
-  #   ports:
-  #     - "5003:8080"
-  #   environment:
-  #     - ASPNETCORE_ENVIRONMENT=Development
-  #     - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=dukaan;Username=postgres;Password=password
-  #     - Redis__ConnectionString=redis:6379
-  #     - Jwt__Key=${JWT_KEY}
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - dukaan-network
+  notification-api:
+    build:
+      context: ./Dukaan.Notification
+      dockerfile: Dukaan.Notification.Host/Dockerfile
+    container_name: dukaan-notification
+    ports:
+      - "5003:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=dukaan;Username=postgres;Password=password
+      - Redis__ConnectionString=redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - dukaan-network
 
   dukaan-media:
     build:
