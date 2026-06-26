@@ -37,7 +37,7 @@ export function MerchantSidebar({ storeName }: MerchantSidebarProps) {
   return (
     <Sidebar>
       <SidebarHeader className="px-4 py-4">
-        <p className="truncate text-sm font-medium text-sidebar-foreground">{storeName}</p>
+        <p className="truncate text-lg font-semibold text-sidebar-foreground">{storeName}</p>
       </SidebarHeader>
 
       <SidebarContent className="px-2">
