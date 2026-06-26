@@ -23,7 +23,6 @@ export default function MerchantLayout({
   const router = useRouter();
   const token = useLocalStorageToken("token");
   const [storeName, setStoreName] = useState(() => localStorageService.getStoreName() ?? "");
-  const [email] = useState(() => localStorageService.getEmail() ?? "");
 
   useEffect(() => {
     if (token === null) router.replace("/merchant/login");
@@ -51,7 +50,7 @@ export default function MerchantLayout({
 
   return (
     <SidebarProvider>
-      <MerchantSidebar storeName={storeName} email={email} />
+      <MerchantSidebar storeName={storeName} />
       <SidebarInset className="overflow-y-auto">{children}</SidebarInset>
     </SidebarProvider>
   );

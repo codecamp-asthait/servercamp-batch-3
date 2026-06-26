@@ -23,10 +23,9 @@ const NAV_LINKS = [
 
 interface MerchantSidebarProps {
   storeName: string;
-  email: string;
 }
 
-export function MerchantSidebar({ storeName, email }: MerchantSidebarProps) {
+export function MerchantSidebar({ storeName }: MerchantSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -39,7 +38,6 @@ export function MerchantSidebar({ storeName, email }: MerchantSidebarProps) {
     <Sidebar>
       <SidebarHeader className="px-4 py-4">
         <p className="truncate text-sm font-medium text-sidebar-foreground">{storeName}</p>
-        <p className="truncate text-xs text-sidebar-foreground/60">{email}</p>
       </SidebarHeader>
 
       <SidebarContent className="px-2">

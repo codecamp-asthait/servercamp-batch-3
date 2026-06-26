@@ -22,7 +22,7 @@ public class LoginHandler(IUserService userService) : ICommandHandler<LoginComma
             }
 
             DukaanMetrics.AuthLogins.Add(1, DukaanMetrics.Tag("tenant_id", result.TenantId));
-            return new AuthDto(result.Token, result.Expiration, request.Email);
+            return new AuthDto(result.Token, result.Expiration);
         }
         catch
         {
