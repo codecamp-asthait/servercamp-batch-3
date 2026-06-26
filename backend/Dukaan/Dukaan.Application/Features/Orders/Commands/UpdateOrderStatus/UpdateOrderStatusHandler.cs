@@ -1,5 +1,6 @@
 using Dukaan.Application.Core.Abstractions;
 using Dukaan.Application.Interfaces;
+using Dukaan.Domain.Entities;
 using Dukaan.Domain.Enums;
 using ErrorOr;
 using Microsoft.Extensions.Logging;
@@ -9,6 +10,7 @@ namespace Dukaan.Application.Features.Orders.Commands.UpdateOrderStatus;
 
 public class UpdateOrderStatusHandler(
     IRepository<OrderEntity> orderRepository,
+    IRepository<Customer> customerRepository,
     IEventBus eventBus,
     ILogger<UpdateOrderStatusHandler> logger)
     : ICommandHandler<UpdateOrderStatusCommand, ErrorOr<Success>>
@@ -46,13 +48,18 @@ public class UpdateOrderStatusHandler(
         {
             try
             {
-                await eventBus.PublishAsync(eventName, new Dictionary<string, string>
+                var customer = await customerRepository.GetByIdAsync(order.CustomerId, cancellationToken: cancellationToken);
+                var userId = customer?.ApplicationUserId;
+                if (userId is not null)
                 {
-                    ["tenant_id"] = order.TenantId.ToString(),
-                    ["customer_id"] = order.CustomerId.ToString(),
-                    ["order_id"] = order.Id.ToString(),
-                    ["order_display_id"] = order.OrderNumber
-                }, cancellationToken);
+                    await eventBus.PublishAsync(eventName, new Dictionary<string, string>
+                    {
+                        ["tenant_id"] = order.TenantId.ToString(),
+                        ["customer_id"] = userId.Value.ToString(),
+                        ["order_id"] = order.Id.ToString(),
+                        ["order_display_id"] = order.OrderNumber
+                    }, cancellationToken);
+                }
             }
             catch (Exception ex)
             {

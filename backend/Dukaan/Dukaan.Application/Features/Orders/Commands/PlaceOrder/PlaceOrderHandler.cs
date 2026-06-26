@@ -21,7 +21,8 @@ public class PlaceOrderHandler(
     IOrderNumberService orderNumberService,
     IMediator mediator,
     IEventBus eventBus,
-    ILogger<PlaceOrderHandler> logger)
+    ILogger<PlaceOrderHandler> logger,
+    IUserService userService)
     : ICommandHandler<PlaceOrderCommand, ErrorOr<OrderDto>>
 {
     public async Task<ErrorOr<OrderDto>> Handle(PlaceOrderCommand request, CancellationToken cancellationToken)
@@ -148,13 +149,17 @@ public class PlaceOrderHandler(
 
             try
             {
-                await eventBus.PublishAsync("order-placed", new Dictionary<string, string>
+                var userId = userService.GetCurrentUserId();
+                if (userId is not null)
                 {
-                    ["tenant_id"] = order.TenantId.ToString(),
-                    ["customer_id"] = order.CustomerId.ToString(),
-                    ["order_id"] = order.Id.ToString(),
-                    ["order_display_id"] = order.OrderNumber
-                }, cancellationToken);
+                    await eventBus.PublishAsync("order-placed", new Dictionary<string, string>
+                    {
+                        ["tenant_id"] = order.TenantId.ToString(),
+                        ["customer_id"] = userId.Value.ToString(),
+                        ["order_id"] = order.Id.ToString(),
+                        ["order_display_id"] = order.OrderNumber
+                    }, cancellationToken);
+                }
             }
             catch (Exception ex)
             {
