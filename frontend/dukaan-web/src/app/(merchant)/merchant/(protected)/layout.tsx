@@ -17,7 +17,7 @@ export default function MerchantLayout({
   const router = useRouter();
   const token = useLocalStorageToken("token");
   const { data: profile } = useMerchantProfile();
-  const storeName = profile?.storeName ?? localStorageService.getStoreName() ?? "";
+  const storeName = localStorageService.getStoreName() ?? profile?.storeName ?? "";
 
   useEffect(() => {
     if (token === null) router.replace("/merchant/login");
