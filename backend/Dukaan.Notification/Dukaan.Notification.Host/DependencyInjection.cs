@@ -36,11 +36,10 @@ public static class DependencyInjection
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!)),
-                    NameClaimType = "nameid"
+                        Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
                 };
 
-                options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+                options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = context =>
                     {
