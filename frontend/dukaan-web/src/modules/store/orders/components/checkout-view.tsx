@@ -18,9 +18,9 @@ interface Props {
 export function CheckoutView({ slug, token, onBack, onSuccess }: Props) {
   const { data: addresses, isLoading, isError } = useCustomerAddresses(slug, token);
   const { mutate: placeOrder, isPending } = usePlaceOrder(slug, token);
+  const billingAddresses = addresses?.filter((a) => a.type === "Billing") ?? [];
 
-  const billingAddresses = addresses?.filter((a) => a.type === 1) ?? [];
-  const deliveryAddresses = addresses?.filter((a) => a.type === 2) ?? [];
+  const deliveryAddresses = addresses?.filter((a) => a.type === "Delivery") ?? [];
 
   const defaultBilling = billingAddresses.find((a) => a.isDefault);
   const defaultDelivery = deliveryAddresses.find((a) => a.isDefault);

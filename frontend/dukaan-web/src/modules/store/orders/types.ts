@@ -29,7 +29,7 @@ export interface AddressSnapshotDto {
 export interface AddressDto {
   id: string;
   label: string;
-  type: number; // 1 for Billing, 2 for Delivery  
+  type: "Billing" | "Delivery";
   street: string;
   city: string;
   district: string;
