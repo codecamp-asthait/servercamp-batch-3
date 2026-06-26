@@ -10,7 +10,8 @@ export function useMerchantProfile() {
       localStorageService.setStoreName(profile.storeName);
       return profile;
     },
-    staleTime: 5 * 60 * 1000,
+    enabled: !localStorageService.getStoreName(),
+    staleTime: Infinity,
     retry: false,
   });
 }
