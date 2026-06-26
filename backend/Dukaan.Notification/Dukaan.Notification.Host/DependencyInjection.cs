@@ -19,9 +19,10 @@ public static class DependencyInjection
         {
             options.AddDefaultPolicy(policy =>
             {
-                policy.AllowAnyOrigin()
+                policy.WithOrigins("http://localhost:3000", "http://localhost:3001")
                       .AllowAnyMethod()
-                      .AllowAnyHeader();
+                      .AllowAnyHeader()
+                      .AllowCredentials();
             });
         });
 
@@ -37,6 +38,19 @@ public static class DependencyInjection
                     IssuerSigningKey = new SymmetricSecurityKey(
                         Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!)),
                     NameClaimType = "nameid"
+                };
+
+                options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        if (!string.IsNullOrEmpty(accessToken))
+                        {
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
                 };
             });
 
