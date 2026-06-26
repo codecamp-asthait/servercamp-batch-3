@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY Dukaan.Notification.sln ./
+COPY Dukaan.Notification.slnx ./
 COPY Dukaan.Notification.Domain/Dukaan.Notification.Domain.csproj Dukaan.Notification.Domain/
 COPY Dukaan.Notification.Application/Dukaan.Notification.Application.csproj Dukaan.Notification.Application/
 COPY Dukaan.Notification.Infrastructure/Dukaan.Notification.Infrastructure.csproj Dukaan.Notification.Infrastructure/
