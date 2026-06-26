@@ -13,6 +13,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { localStorageService } from "@/lib/local-storage.service";
+import { NotificationBell } from "@/modules/notifications/notification-bell";
 
 const NAV_LINKS = [
   { label: "Dashboard", href: "/merchant/dashboard", icon: LayoutDashboard },
@@ -36,8 +37,9 @@ export function MerchantSidebar({ storeName }: MerchantSidebarProps) {
 
   return (
     <Sidebar>
-      <SidebarHeader className="px-4 py-4">
+      <SidebarHeader className="px-4 py-4 flex flex-row items-center justify-between">
         <p className="truncate text-lg font-semibold text-sidebar-foreground">{storeName}</p>
+        <NotificationBell token={localStorageService.getToken()} enabled />
       </SidebarHeader>
 
       <SidebarContent className="px-2">

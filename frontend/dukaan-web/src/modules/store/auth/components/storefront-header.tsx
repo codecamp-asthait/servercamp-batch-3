@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useCustomerAuthState } from "../hooks";
 import { CartDrawer } from "@/modules/store/cart/components/cart-drawer";
+import { NotificationBell } from "@/modules/notifications/notification-bell";
 
 export function StorefrontHeader({ slug }: { slug: string }) {
   const { token, email, logout } = useCustomerAuthState(slug);
@@ -13,6 +14,7 @@ export function StorefrontHeader({ slug }: { slug: string }) {
       <span className="font-semibold">Store</span>
       <div className="flex items-center gap-3">
         <CartDrawer slug={slug} token={token} />
+        <NotificationBell token={token} enabled />
         {token ? (
           <>
             <span className="text-sm text-zinc-500 hidden sm:block">{email}</span>
