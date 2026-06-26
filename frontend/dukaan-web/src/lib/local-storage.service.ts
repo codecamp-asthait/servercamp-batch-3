@@ -1,6 +1,5 @@
 const TOKEN_KEY = "token";
 const EMAIL_KEY = "email";
-const STORE_NAME_KEY = "store_name";
 
 const isBrowser = typeof window !== "undefined";
 
@@ -13,15 +12,10 @@ export const localStorageService = {
   setEmail: (email: string) => isBrowser && localStorage.setItem(EMAIL_KEY, email),
   removeEmail: () => isBrowser && localStorage.removeItem(EMAIL_KEY),
 
-  getStoreName: () => (isBrowser ? localStorage.getItem(STORE_NAME_KEY) : null),
-  setStoreName: (name: string) => isBrowser && localStorage.setItem(STORE_NAME_KEY, name),
-  removeStoreName: () => isBrowser && localStorage.removeItem(STORE_NAME_KEY),
-
   clear: () => {
     if (!isBrowser) return;
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(EMAIL_KEY);
-    localStorage.removeItem(STORE_NAME_KEY);
   },
 
   getCustomerToken: (slug: string) =>

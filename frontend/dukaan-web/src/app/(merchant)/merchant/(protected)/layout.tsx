@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { MerchantSidebar } from "@/modules/merchant/dashboard/components/merchant-sidebar";
-import { localStorageService } from "@/lib/local-storage.service";
 import { useLocalStorageToken } from "@/lib/use-local-storage";
 import { useMerchantProfile } from "@/modules/merchant/dashboard/hooks";
 import { Spinner } from "@/components/spinner";
@@ -17,7 +16,6 @@ export default function MerchantLayout({
   const router = useRouter();
   const token = useLocalStorageToken("token");
   const { data: profile } = useMerchantProfile();
-  const storeName = localStorageService.getStoreName() ?? profile?.storeName ?? "";
 
   useEffect(() => {
     if (token === null) router.replace("/merchant/login");
@@ -27,7 +25,7 @@ export default function MerchantLayout({
 
   return (
     <SidebarProvider>
-      <MerchantSidebar storeName={storeName} />
+      <MerchantSidebar storeName={profile?.storeName ?? ""} />
       <SidebarInset className="overflow-y-auto">{children}</SidebarInset>
     </SidebarProvider>
   );
