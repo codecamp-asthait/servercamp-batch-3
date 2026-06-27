@@ -39,7 +39,7 @@ export function MerchantSidebar({ storeName }: MerchantSidebarProps) {
     <Sidebar>
       <SidebarHeader className="px-4 py-4 flex flex-row items-center justify-between">
         <p className="truncate text-lg font-semibold text-sidebar-foreground">{storeName}</p>
-        <NotificationBell token={localStorageService.getToken()} enabled />
+        {/* <NotificationBell token={localStorageService.getToken()} enabled /> */}
       </SidebarHeader>
 
       <SidebarContent className="px-2">
