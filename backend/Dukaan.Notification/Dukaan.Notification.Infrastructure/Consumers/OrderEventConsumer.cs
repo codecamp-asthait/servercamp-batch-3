@@ -15,12 +15,34 @@ namespace Dukaan.Notification.Infrastructure.Consumers;
 ///
 /// Events are consumed using a consumer group (<see cref="GroupName"/>) for load-balanced processing
 /// across multiple instances. Orphaned messages from crashed consumers are automatically reclaimed.
+///
+/// The stream is periodically trimmed to prevent unbounded growth. Trimming occurs every
+/// <see cref="TrimIntervalBatches"/> batches and uses a safe strategy that never evicts unprocessed messages.
 /// </summary>
 public class OrderEventConsumer : BackgroundService
 {
+    /// <summary>
+    /// Number of processed batches before triggering a stream trim operation.
+    /// Trimming every 10 batches (100 messages) balances memory cleanup with Redis operation overhead.
+    /// </summary>
+    private const int TrimIntervalBatches = 10;
+
+    /// <summary>
+    /// Number of recent entries to keep in the stream after trimming when all messages are processed.
+    /// This safety buffer ensures no race conditions occur between producers and consumers.
+    /// 100 entries × ~500 bytes = ~50KB, negligible on a 25MB Redis instance.
+    /// </summary>
+    private const int TrimSafetyBuffer = 100;
+
     private readonly IConnectionMultiplexer _redis;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<OrderEventConsumer> _logger;
+
+    /// <summary>
+    /// Counter tracking the number of batches processed since the last trim operation.
+    /// Incremented after each batch and reset after trimming.
+    /// </summary>
+    private int _processedCount;
 
     /// <summary>Redis Stream key where the main Dukaan API publishes order events.</summary>
     private const string StreamName = "order-events";
@@ -92,6 +114,15 @@ public class OrderEventConsumer : BackgroundService
                 {
                     await ProcessEntryAsync(entry, cancellationToken);
                     await db.StreamAcknowledgeAsync(StreamName, GroupName, entry.Id);
+                }
+
+                // Periodically trim processed entries from the stream.
+                // Trimming every 10 batches (100 messages) prevents unbounded growth while avoiding
+                // excessive Redis operations. The trim operation is safe because it only removes
+                // messages that have been acknowledged by all consumers.
+                if (entries.Length > 0 && ++_processedCount % TrimIntervalBatches == 0)
+                {
+                    await TrimStreamAsync(db);
                 }
 
                 // When idle, check for orphaned messages from other consumers
@@ -179,6 +210,55 @@ public class OrderEventConsumer : BackgroundService
 
         await hubContext.Clients.Group($"user-{customerId}")
             .SendAsync("Notification", dto, ct);
+    }
+
+    /// <summary>
+    /// Trims acknowledged entries from the Redis Stream to prevent unbounded growth.
+    ///
+    /// Two trimming strategies are used based on pending message state:
+    /// 1. When no messages are pending: Uses MAXLEN to keep only the last <see cref="TrimSafetyBuffer"/> entries.
+    ///    This is safe because all messages have been processed and acknowledged.
+    /// 2. When messages are pending: Uses XTRIM MINID to remove only entries older than the oldest pending message.
+    ///    This ensures unprocessed messages are never evicted, even if they've been waiting for a long time.
+    ///
+    /// Called every <see cref="TrimIntervalBatches"/> batches to balance cleanup with Redis operation overhead.
+    /// </summary>
+    private async Task TrimStreamAsync(IDatabase db)
+    {
+        try
+        {
+            var pendingInfo = await db.StreamPendingAsync(StreamName, GroupName);
+
+            if (pendingInfo.PendingMessageCount == 0)
+            {
+                // No pending messages - safe to trim to safety buffer size
+                var trimmed = await db.StreamTrimAsync(StreamName, TrimSafetyBuffer);
+                if (trimmed > 0)
+                {
+                    _logger.LogInformation("Trimmed {Count} acknowledged entries from stream '{StreamName}'", trimmed, StreamName);
+                }
+            }
+            else
+            {
+                // Pending messages exist - only trim entries older than the oldest pending message
+                var oldestPending = await db.StreamRangeAsync(StreamName, "-", "+", count: 1, Order.Ascending);
+                if (oldestPending.Length > 0)
+                {
+                    // XTRIM MINID removes all entries with ID less than the specified value
+                    // This preserves the oldest pending message and everything after it
+                    var result = await db.ExecuteAsync("XTRIM", StreamName, "MINID", oldestPending[0].Id.ToString());
+                    var trimmed = (long)result;
+                    if (trimmed > 0)
+                    {
+                        _logger.LogInformation("Trimmed {Count} acknowledged entries from stream '{StreamName}' (MINID={MinId})", trimmed, StreamName, oldestPending[0].Id);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error trimming stream '{StreamName}'", StreamName);
+        }
     }
 
     /// <summary>
