@@ -23,22 +23,28 @@ export function useCustomerRegister(slug: string, onSuccess: () => void) {
 }
 
 export function useCustomerAuthState(slug: string) {
-  const [state, setState] = useState<{ token: string | null; email: string | null }>({
+  const [state, setState] = useState<{
+    token: string | null;
+    email: string | null;
+    pending: boolean;
+  }>({
     token: null,
     email: null,
+    pending: true,
   });
 
   useEffect(() => {
     setState({
       token: localStorageService.getCustomerToken(slug),
       email: localStorageService.getCustomerEmail(slug),
+      pending: false,
     });
   }, [slug]);
 
   const logout = () => {
     localStorageService.removeCustomerToken(slug);
     localStorageService.removeCustomerEmail(slug);
-    setState({ token: null, email: null });
+    setState({ token: null, email: null, pending: false });
   };
 
   return { ...state, logout };
