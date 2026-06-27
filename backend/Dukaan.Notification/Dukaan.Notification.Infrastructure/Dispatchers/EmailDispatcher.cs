@@ -1,6 +1,7 @@
 using Dukaan.Notification.Application.Interfaces;
 using Dukaan.Notification.Application.Models;
 using Dukaan.Notification.Domain.Entities;
+using Dukaan.Notification.Domain.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -37,6 +38,7 @@ public class EmailDispatcher(
             TenantId = eventData.TenantId,
             EventType = eventData.EventType,
             OrderId = eventData.OrderId,
+            ChannelType = NotificationChannelType.Email,
             Title = string.Empty,
             Message = string.Empty,
             IsRead = false,

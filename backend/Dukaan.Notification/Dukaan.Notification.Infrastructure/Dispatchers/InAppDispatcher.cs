@@ -1,6 +1,7 @@
 using Dukaan.Notification.Application.Interfaces;
 using Dukaan.Notification.Application.Models;
 using Dukaan.Notification.Domain.Entities;
+using Dukaan.Notification.Domain.Enums;
 using Dukaan.Notification.Infrastructure.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,6 +48,7 @@ public class InAppDispatcher(
             TenantId = eventData.TenantId,
             EventType = eventData.EventType,
             OrderId = eventData.OrderId,
+            ChannelType = NotificationChannelType.InApp,
             Title = title,
             Message = message,
             IsRead = false,
