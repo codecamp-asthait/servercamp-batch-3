@@ -61,7 +61,7 @@ public class UpdateOrderStatusHandler(
                         ["tenant_id"] = order.TenantId.ToString(),
                         ["customer_id"] = userId.Value.ToString(),
                         ["customer_email"] = customerEmail,
-                        ["notification_types"] = "in-app",
+                        ["notification_types"] = "in-app,email",
                         ["order_id"] = order.Id.ToString(),
                         ["order_display_id"] = order.OrderNumber
                     }, cancellationToken);
