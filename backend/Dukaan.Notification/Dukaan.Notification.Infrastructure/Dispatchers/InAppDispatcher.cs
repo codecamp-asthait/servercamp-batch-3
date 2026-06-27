@@ -28,12 +28,6 @@ public class InAppDispatcher(
         using var scope = scopeFactory.CreateScope();
         var repository = scope.ServiceProvider.GetRequiredService<IRepository<NotificationEntity>>();
 
-        notification.IsRead = false;
-        notification.CreatedAt = DateTime.UtcNow;
-
-        await repository.AddAsync(notification, ct);
-        await repository.SaveChangesAsync(ct);
-
         var orderDisplayId = notification.OrderId?.ToString("N")[..8] ?? "N/A";
 
         string title, message;
@@ -47,6 +41,14 @@ public class InAppDispatcher(
             title = $"Order {notification.EventType}";
             message = $"Your order (event: {notification.EventType}) has been updated.";
         }
+
+        notification.Title = title;
+        notification.Message = message;
+        notification.IsRead = false;
+        notification.CreatedAt = DateTime.UtcNow;
+
+        await repository.AddAsync(notification, ct);
+        await repository.SaveChangesAsync(ct);
 
         var dto = new
         {

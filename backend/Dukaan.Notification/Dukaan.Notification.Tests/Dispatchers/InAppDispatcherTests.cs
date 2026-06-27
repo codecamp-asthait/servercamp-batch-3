@@ -53,7 +53,9 @@ public class InAppDispatcherTests
 
         await _sut.DispatchAsync(notification, null, null, default);
 
-        _repository.Verify(r => r.AddAsync(It.IsAny<NotificationEntity>(), default), Times.Once);
+        _repository.Verify(r => r.AddAsync(
+            It.Is<NotificationEntity>(n => !string.IsNullOrEmpty(n.Title) && !string.IsNullOrEmpty(n.Message)),
+            default), Times.Once);
         _repository.Verify(r => r.SaveChangesAsync(default), Times.Once);
         _clientProxy.Verify(
             c => c.SendCoreAsync("Notification", It.IsAny<object[]>(), default),

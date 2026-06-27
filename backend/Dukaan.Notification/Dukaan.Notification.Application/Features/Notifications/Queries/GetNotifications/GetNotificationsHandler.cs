@@ -30,6 +30,8 @@ public class GetNotificationsHandler(
                 n.Id,
                 n.EventType,
                 n.OrderId,
+                n.Title,
+                n.Message,
                 n.IsRead,
                 n.CreatedAt))
             .ToList();

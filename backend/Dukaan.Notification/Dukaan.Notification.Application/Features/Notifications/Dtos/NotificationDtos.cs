@@ -4,6 +4,8 @@ public record NotificationDto(
     Guid Id,
     string EventType,
     Guid? OrderId,
+    string Title,
+    string Message,
     bool IsRead,
     DateTime CreatedAt);
 
