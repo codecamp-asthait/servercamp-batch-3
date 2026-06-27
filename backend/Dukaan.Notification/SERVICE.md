@@ -1,16 +1,18 @@
 # Dukaan.Notification Service
 
-Real-time notification service. Consumes order lifecycle events from Dukaan API via Redis Streams, persists notification history, and pushes real-time updates to connected clients via WebSocket (SignalR).
+Notification dispatch service. Consumes order lifecycle events from Dukaan API via Redis Streams and dispatches them to configured channels using a strategy pattern. Channels: `"in-app"` (persisted inbox + SignalR push), `"signal"` (instant raw data push via SignalR), `"email"` (formatted HTML via SMTP). Channel selection is producer-driven via `notification_types` in the event payload.
 
 ## Responsibility
 
 - Consume order lifecycle events from Redis Streams
 - Persist notification history per customer
-- Real-time notification delivery via SignalR WebSocket
+- Real-time notification delivery via SignalR WebSocket (in-app inbox)
+- Real-time signal dispatch via SignalR WebSocket (instant toasts)
+- Email notification delivery via SMTP
 - Notification inbox with pagination and unread count
 - Mark-as-read functionality
 
-**Does NOT handle:** order data, customer data, product data, email/SMS/push notification dispatch, merchant dashboard notifications, notification preferences.
+**Does NOT handle:** order data, customer data, product data, SMS/push notification dispatch, merchant dashboard notifications, notification preferences.
 
 ## Ports
 
@@ -38,8 +40,6 @@ Real-time notification service. Consumes order lifecycle events from Dukaan API 
   id: Guid,
   eventType: string,
   orderId: Guid?,
-  title: string,
-  message: string,
   isRead: bool,
   createdAt: DateTime
 }
@@ -72,7 +72,8 @@ Real-time notification service. Consumes order lifecycle events from Dukaan API 
 
 | Event | Payload | Description |
 |-------|---------|-------------|
-| `Notification` | `NotificationDto` | Real-time notification push |
+| `Notification` | `NotificationDto` | In-app inbox notification push |
+| `Signal` | `string` | Instant raw signal for toasts |
 
 **No client-invocable methods** -- hub is push-only.
 
@@ -92,8 +93,6 @@ Real-time notification service. Consumes order lifecycle events from Dukaan API 
 | tenant_id | uuid | NOT NULL, indexed |
 | event_type | varchar(100) | NOT NULL (e.g., `order-shipped`) |
 | order_id | uuid | NULLABLE |
-| title | varchar(200) | NOT NULL |
-| message | varchar(2000) | NOT NULL |
 | is_read | boolean | NOT NULL DEFAULT FALSE |
 | created_at | timestamptz | NOT NULL DEFAULT NOW() |
 
@@ -103,17 +102,30 @@ Real-time notification service. Consumes order lifecycle events from Dukaan API 
 
 **Global query filter:** `HasQueryFilter(e => e.TenantId == tenantProvider.GetTenantId())`
 
-## Notification Types (Event Templates)
+## Dispatch Pattern
 
-| Event Type | Title | Message Template |
-|------------|-------|------------------|
-| `order-placed` | Order Placed | Your order #{0} has been placed successfully. |
-| `order-confirmed` | Order Confirmed | Your order #{0} has been confirmed. |
-| `order-shipped` | Order Shipped | Your order #{0} has been shipped. |
-| `order-delivered` | Order Delivered | Your order #{0} has been delivered. |
-| `order-cancelled` | Order Cancelled | Your order #{0} has been cancelled. |
+The service uses a strategy pattern for notification delivery:
 
-**Fallback:** Unknown event types use title "Order Update" and raw `data` field as message.
+- `INotificationDispatcher` interface with `ChannelType` property (`"in-app"`, `"signal"`, `"email"`)
+- `INotificationDispatchManager` orchestrates dispatchers based on `notification_types` in the event payload
+- `OrderEventConsumer` delegates to the manager — it never loops through dispatchers directly
+- The manager filters dispatchers by channel type and executes each with try/catch isolation
+- Adding a new channel = create a new dispatcher class — no changes to the consumer or manager
+
+### Channels
+
+| Channel | Dispatcher | Persists? | SignalR Event | Description |
+|---------|-----------|-----------|---------------|-------------|
+| `"in-app"` | `InAppDispatcher` | Yes | `"Notification"` | Inbox notification — persisted + pushed for bell icon history |
+| `"signal"` | `SignalDispatcher` | No | `"Signal"` | Instant real-time toast — raw data pushed verbatim |
+| `"email"` | `EmailDispatcher` | No | N/A | Formatted HTML email via SMTP |
+
+### Templates
+
+Each dispatcher owns its own templates:
+- `InAppDispatcher` formats `NotificationDto` with event type and order ID — no title/message on the entity
+- `EmailDispatcher` has its own `EmailTemplates` dictionary for subject and HTML body per event type
+- `SignalDispatcher` pushes raw data verbatim — no templates
 
 ## Inter-Service Communication
 
@@ -130,11 +142,15 @@ Real-time notification service. Consumes order lifecycle events from Dukaan API 
   "event": "order-shipped",
   "tenant_id": "guid",
   "customer_id": "guid",
+  "customer_email": "customer@example.com",
+  "notification_types": "in-app,signal,email",
   "order_id": "guid",
   "order_display_id": "789",
   "data": "{\"orderId\":\"guid\",\"newStatus\":\"Shipped\"}"
 }
 ```
+
+`notification_types` is a comma-separated list of channel identifiers. Supported values: `in-app`, `signal`, `email`. If omitted, defaults to `in-app`.
 
 ### Consumer Implementation (`OrderEventConsumer`)
 
@@ -142,7 +158,8 @@ Real-time notification service. Consumes order lifecycle events from Dukaan API 
 - Creates consumer group idempotently (handles `BUSYGROUP` error)
 - Unique consumer name per instance: `consumer-{MachineName}-{Guid}`
 - Blocking read with `StreamReadGroupAsync` (up to 10 messages per batch)
-- Processes message → persists to DB → pushes to SignalR → acknowledges message
+- Processes message → resolves `INotificationDispatchManager` → dispatches to configured channels → acknowledges message
+- Persistence is handled by `InAppDispatcher` (not the consumer)
 - Reclaims orphaned messages from crashed consumers via `StreamAutoClaimAsync` (60s idle timeout)
 
 **Delivery guarantee:** At-least-once (messages stay in Pending Entries List until acknowledged)
@@ -250,6 +267,17 @@ options.TokenValidationParameters = new TokenValidationParameters
   },
   "Jwt": {
     "Key": "placeholder-key-change-in-production"
+  },
+  "Email": {
+    "Smtp": {
+      "Host": "mailhog",
+      "Port": 1025,
+      "Username": "",
+      "Password": "",
+      "FromName": "Dukaan",
+      "FromAddress": "noreply@dukaan.com",
+      "EnableSsl": false
+    }
   }
 }
 ```
@@ -261,6 +289,7 @@ options.TokenValidationParameters = new TokenValidationParameters
 | PostgreSQL | Notification history | `ConnectionStrings:DefaultConnection` |
 | Redis | SignalR backplane + event consumption | `Redis:ConnectionString` |
 | Dukaan (main) | Produces order events to Redis Streams | -- |
+| MailHog | Local email capture (dev) | `Email:Smtp:Host`, `Email:Smtp:Port` |
 
 ## Frontend Integration
 
@@ -294,9 +323,12 @@ connection.on("Notification", (data: NotificationDto) => {
 | Notification Service crashes mid-consumption | Message stays in PEL. Reclaimed after 60s idle timeout. |
 | Frontend loses WebSocket | `withAutomaticReconnect()` retries. REST API still works for history. |
 | Customer connects to different instance after reconnect | Redis backplane remaps group. No messages lost. |
-| Customer offline | Notification stored in DB. Visible in history when they return. |
+| Customer offline | In-app notification stored in DB. Visible in history when they return. |
 | JWT expired on WebSocket | `accessTokenFactory` provides fresh token on reconnect. |
-| Unknown event type | Uses fallback title "Order Update" and raw `data` field. |
+| Unknown event type | Each dispatcher uses its own fallback — `InAppDispatcher` shows event type, `EmailDispatcher` uses generic text, `SignalDispatcher` passes raw data. |
+| SMTP connection fails | `NotificationDispatchManager` catches and logs. Email fails but in-app/signal still succeed. |
+| Customer email missing when `"email"` channel active | `EmailDispatcher` skips, logs warning. |
+| `notification_types` missing from event | Defaults to `"in-app"` only. Backward compatible. |
 
 ## NuGet Packages
 
@@ -308,5 +340,6 @@ connection.on("Notification", (data: NotificationDto) => {
 | Infrastructure | `StackExchange.Redis` | 2.8.31 | Redis Streams + SignalR backplane |
 | Infrastructure | `Microsoft.AspNetCore.SignalR.StackExchangeRedis` | 10.0.9 | SignalR Redis backplane |
 | Infrastructure | `Npgsql.EntityFrameworkCore.PostgreSQL` | 10.0.2 | Database |
+| Infrastructure | `MailKit` | 4.12.1 | SMTP email sending |
 | Host | `Microsoft.AspNetCore.Authentication.JwtBearer` | 10.0.9 | JWT auth |
 | Host | `Microsoft.AspNetCore.OpenApi` | 10.0.9 | OpenAPI/Swagger |
