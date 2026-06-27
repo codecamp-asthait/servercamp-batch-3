@@ -1,12 +1,10 @@
 using Dukaan.Notification.Application.Interfaces;
 using Dukaan.Notification.Domain.Entities;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Dukaan.Notification.Infrastructure.Dispatchers;
 
 public class EmailDispatcher(
-    IServiceScopeFactory scopeFactory,
     IEmailService emailService,
     ILogger<EmailDispatcher> logger) : INotificationDispatcher
 {
@@ -28,15 +26,6 @@ public class EmailDispatcher(
             logger.LogWarning("Skipping email for NotificationId={NotificationId}: customer email is empty", notification.Id);
             return;
         }
-
-        using var scope = scopeFactory.CreateScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IRepository<NotificationEntity>>();
-
-        notification.IsRead = false;
-        notification.CreatedAt = DateTime.UtcNow;
-
-        await repository.AddAsync(notification, ct);
-        await repository.SaveChangesAsync(ct);
 
         var orderDisplayId = notification.OrderId?.ToString("N")[..8] ?? "N/A";
 
