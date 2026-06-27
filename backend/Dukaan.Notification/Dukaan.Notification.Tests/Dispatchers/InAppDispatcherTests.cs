@@ -61,7 +61,7 @@ public class InAppDispatcherTests
     }
 
     [Fact]
-    public async Task DispatchAsync_ShouldSendCorrectNotificationDto()
+    public async Task DispatchAsync_ShouldSendFormattedNotificationDto()
     {
         var customerId = Guid.Parse("11111111-1111-1111-1111-111111111111");
         var orderId = Guid.NewGuid();
@@ -83,6 +83,9 @@ public class InAppDispatcherTests
     {
         var dict = dto.GetType().GetProperties()
             .ToDictionary(p => p.Name, p => p.GetValue(dto)?.ToString());
-        return dict["eventType"] == eventType && dict["orderId"] == orderId.ToString();
+        return dict["eventType"] == eventType
+            && dict["orderId"] == orderId.ToString()
+            && !string.IsNullOrEmpty(dict["title"])
+            && !string.IsNullOrEmpty(dict["message"]);
     }
 }
