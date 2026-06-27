@@ -11,7 +11,7 @@ public class DeleteProductHandler(IRepository<Product> repository)
 {
     public async Task<ErrorOr<Deleted>> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
     {
-        var product = await repository.GetByIdAsync(request.Id, cancellationToken: cancellationToken);
+        var product = await repository.GetByIdAsync(request.Id, trackChanges: true, cancellationToken: cancellationToken);
         
         if (product is null)
             return ProductErrors.NotFound;
