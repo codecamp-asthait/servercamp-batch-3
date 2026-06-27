@@ -3,4 +3,5 @@
   <Project Path="Dukaan.Notification.Application/Dukaan.Notification.Application.csproj" />
   <Project Path="Dukaan.Notification.Infrastructure/Dukaan.Notification.Infrastructure.csproj" />
   <Project Path="Dukaan.Notification.Host/Dukaan.Notification.Host.csproj" />
+  <Project Path="Dukaan.Notification.Tests/Dukaan.Notification.Tests.csproj" />
 </Solution>

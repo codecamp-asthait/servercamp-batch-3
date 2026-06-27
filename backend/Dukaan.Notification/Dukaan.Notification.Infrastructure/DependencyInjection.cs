@@ -1,7 +1,9 @@
 using Dukaan.Notification.Application.Interfaces;
+using Dukaan.Notification.Infrastructure.Configuration;
 using Dukaan.Notification.Infrastructure.Consumers;
 using Dukaan.Notification.Infrastructure.Data;
 using Dukaan.Notification.Infrastructure.Data.Repositories;
+using Dukaan.Notification.Infrastructure.Dispatchers;
 using Dukaan.Notification.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -34,6 +36,14 @@ public static class DependencyInjection
         services.AddHostedService<OrderEventConsumer>();
 
         services.AddHostedService<DatabaseMigrationHostedService>();
+
+        services.Configure<SmtpSettings>(configuration.GetSection(SmtpSettings.SectionName));
+
+        services.AddScoped<IEmailService, SmtpEmailService>();
+        services.AddScoped<INotificationDispatchManager, NotificationDispatchManager>();
+        services.AddScoped<INotificationDispatcher, InAppDispatcher>();
+        services.AddScoped<INotificationDispatcher, SignalDispatcher>();
+        services.AddScoped<INotificationDispatcher, EmailDispatcher>();
 
         return services;
     }
