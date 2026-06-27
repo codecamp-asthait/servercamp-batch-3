@@ -25,7 +25,7 @@ Multi-vendor e-commerce platform with a .NET backend and Next.js frontend.
 ## Infrastructure
 
 ```mermaid
-%%{init: {"themeVariables": {"fontFamily": "Inter, sans-serif"}}}%%
+%%{init: {"theme": "default", "themeVariables": {"primaryColor": "#ffffff", "primaryTextColor": "#000000", "primaryBorderColor": "#e5e7eb", "lineColor": "#6b7280", "secondaryColor": "#f9fafb", "tertiaryColor": "#f3f4f6", "clusterBkg": "#ffffff", "clusterBorder": "#e5e7eb", "fontFamily": "Inter, sans-serif"}}}%%
 graph LR
     subgraph Client["Browser :3000 🧭"]
         FE["Next.js Frontend"]
