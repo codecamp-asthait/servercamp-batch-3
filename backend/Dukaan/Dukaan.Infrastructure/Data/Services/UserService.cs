@@ -69,6 +69,19 @@ public class UserService(
         return (result.customer, result.user);
     }
     
+    public async Task<(Customer Customer, ApplicationUser User)?> GetCustomerByUserIdAsync(Guid userId)
+    {
+        var query =
+            from customer in context.Customers
+            join user in context.Users on customer.ApplicationUserId equals user.Id
+            where user.Id == userId && user.UserType == UserType.Customer
+            select new { customer, user };
+
+        var result = await query.FirstOrDefaultAsync();
+        if (result is null) return null;
+        return (result.customer, result.user);
+    }
+
     public Guid? GetCurrentUserId()
     {
         var userIdClaim = httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;

@@ -8,6 +8,7 @@ public interface IUserService
 {
     Guid? GetCurrentUserId();
     Task<(Tenant tenant, Merchant Merchant, ApplicationUser User)?> GetMerchantByUserIdAsync(Guid userId);
+    Task<(Customer Customer, ApplicationUser User)?> GetCustomerByUserIdAsync(Guid userId);
     Task<AuthResponseDto?> LoginMerchantAsync(LoginRequestDto request);
     Task<CustomerAuthResponseDto?> LoginCustomerAsync(CustomerLoginRequestDto request);
     Task<ApplicationUser?> FindByEmailAsync(string email);
