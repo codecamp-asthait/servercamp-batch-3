@@ -152,10 +152,15 @@ public class PlaceOrderHandler(
                 var userId = userService.GetCurrentUserId();
                 if (userId is not null)
                 {
+                    var customerResult = await userService.GetCustomerByUserIdAsync(userId.Value);
+                    var customerEmail = customerResult?.User.Email ?? string.Empty;
+
                     await eventBus.PublishAsync("order-placed", new Dictionary<string, string>
                     {
                         ["tenant_id"] = order.TenantId.ToString(),
                         ["customer_id"] = userId.Value.ToString(),
+                        ["customer_email"] = customerEmail,
+                        ["notification_types"] = "in-app",
                         ["order_id"] = order.Id.ToString(),
                         ["order_display_id"] = order.OrderNumber
                     }, cancellationToken);

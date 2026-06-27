@@ -153,6 +153,15 @@ services:
       interval: 5s
       retries: 5
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: dukaan-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - dukaan-network
+
   notification-api:
     build:
       context: ./Dukaan.Notification
@@ -165,11 +174,20 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=dukaan;Username=postgres;Password=password
       - Redis__ConnectionString=redis:6379
+      - Email__Smtp__Host=mailhog
+      - Email__Smtp__Port=1025
+      - Email__Smtp__Username=
+      - Email__Smtp__Password=
+      - Email__Smtp__FromName=Dukaan
+      - Email__Smtp__FromAddress=noreply@dukaan.com
+      - Email__Smtp__EnableSsl=false
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      mailhog:
+        condition: service_started
     networks:
       - dukaan-network
 

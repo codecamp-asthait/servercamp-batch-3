@@ -12,6 +12,7 @@ public class UpdateOrderStatusHandler(
     IRepository<OrderEntity> orderRepository,
     IRepository<Customer> customerRepository,
     IEventBus eventBus,
+    IUserService userService,
     ILogger<UpdateOrderStatusHandler> logger)
     : ICommandHandler<UpdateOrderStatusCommand, ErrorOr<Success>>
 {
@@ -52,10 +53,15 @@ public class UpdateOrderStatusHandler(
                 var userId = customer?.ApplicationUserId;
                 if (userId is not null)
                 {
+                    var customerResult = await userService.GetCustomerByUserIdAsync(userId.Value);
+                    var customerEmail = customerResult?.User.Email ?? string.Empty;
+
                     await eventBus.PublishAsync(eventName, new Dictionary<string, string>
                     {
                         ["tenant_id"] = order.TenantId.ToString(),
                         ["customer_id"] = userId.Value.ToString(),
+                        ["customer_email"] = customerEmail,
+                        ["notification_types"] = "in-app",
                         ["order_id"] = order.Id.ToString(),
                         ["order_display_id"] = order.OrderNumber
                     }, cancellationToken);
