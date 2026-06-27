@@ -1,13 +1,11 @@
-using Dukaan.Notification.Domain.Entities;
+using Dukaan.Notification.Application.Models;
 
 namespace Dukaan.Notification.Application.Interfaces;
 
 public interface INotificationDispatchManager
 {
     Task DispatchAsync(
-        NotificationEntity notification,
+        NotificationEventData eventData,
         IReadOnlyCollection<string> channels,
-        string? customerEmail,
-        string? rawData,
         CancellationToken ct);
 }

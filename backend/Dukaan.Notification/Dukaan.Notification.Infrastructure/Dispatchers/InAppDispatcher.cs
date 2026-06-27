@@ -1,4 +1,5 @@
 using Dukaan.Notification.Application.Interfaces;
+using Dukaan.Notification.Application.Models;
 using Dukaan.Notification.Domain.Entities;
 using Dukaan.Notification.Infrastructure.Hubs;
 using Microsoft.AspNetCore.SignalR;
@@ -23,30 +24,37 @@ public class InAppDispatcher(
         ["order-cancelled"] = ("Order Cancelled", "Your order #{0} has been cancelled."),
     };
 
-    public async Task DispatchAsync(NotificationEntity notification, string? customerEmail, string? rawData, CancellationToken ct)
+    public async Task DispatchAsync(NotificationEventData eventData, CancellationToken ct)
     {
-        using var scope = scopeFactory.CreateScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IRepository<NotificationEntity>>();
-
-        var orderDisplayId = notification.OrderId?.ToString("N")[..8] ?? "N/A";
+        var orderDisplayId = eventData.OrderDisplayId ?? eventData.OrderId?.ToString("N")[..8] ?? "N/A";
 
         string title, message;
-        if (EventTemplates.TryGetValue(notification.EventType, out var template))
+        if (EventTemplates.TryGetValue(eventData.EventType, out var template))
         {
             title = string.Format(template.Title, orderDisplayId);
             message = string.Format(template.MessageTemplate, orderDisplayId);
         }
         else
         {
-            title = $"Order {notification.EventType}";
-            message = $"Your order (event: {notification.EventType}) has been updated.";
+            title = $"Order {eventData.EventType}";
+            message = $"Your order (event: {eventData.EventType}) has been updated.";
         }
 
-        notification.Title = title;
-        notification.Message = message;
-        notification.IsRead = false;
-        notification.CreatedAt = DateTime.UtcNow;
+        var notification = new NotificationEntity
+        {
+            Id = Guid.NewGuid(),
+            CustomerId = eventData.CustomerId,
+            TenantId = eventData.TenantId,
+            EventType = eventData.EventType,
+            OrderId = eventData.OrderId,
+            Title = title,
+            Message = message,
+            IsRead = false,
+            CreatedAt = DateTime.UtcNow
+        };
 
+        using var scope = scopeFactory.CreateScope();
+        var repository = scope.ServiceProvider.GetRequiredService<IRepository<NotificationEntity>>();
         await repository.AddAsync(notification, ct);
         await repository.SaveChangesAsync(ct);
 
@@ -55,17 +63,17 @@ public class InAppDispatcher(
             id = notification.Id.ToString(),
             eventType = notification.EventType,
             orderId = notification.OrderId?.ToString(),
-            title,
-            message,
+            title = notification.Title,
+            message = notification.Message,
             isRead = notification.IsRead,
             createdAt = notification.CreatedAt
         };
 
-        await hubContext.Clients.Group($"user-{notification.CustomerId}")
+        await hubContext.Clients.Group($"user-{eventData.CustomerId}")
             .SendAsync("Notification", dto, ct);
 
         logger.LogInformation(
             "In-app notification persisted and pushed for Customer={CustomerId}, NotificationId={NotificationId}",
-            notification.CustomerId, notification.Id);
+            eventData.CustomerId, notification.Id);
     }
 }

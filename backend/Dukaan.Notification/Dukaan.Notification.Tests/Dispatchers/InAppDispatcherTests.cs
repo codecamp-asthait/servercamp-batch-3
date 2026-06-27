@@ -1,4 +1,5 @@
 using Dukaan.Notification.Application.Interfaces;
+using Dukaan.Notification.Application.Models;
 using Dukaan.Notification.Domain.Entities;
 using Dukaan.Notification.Infrastructure.Dispatchers;
 using Dukaan.Notification.Infrastructure.Hubs;
@@ -43,15 +44,14 @@ public class InAppDispatcherTests
     [Fact]
     public async Task DispatchAsync_ShouldPersistAndPush()
     {
-        var customerId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-        var notification = new NotificationEntity
-        {
-            EventType = "order-shipped",
-            CustomerId = customerId,
-            OrderId = Guid.NewGuid()
-        };
+        var data = new NotificationEventData(
+            "order-shipped",
+            Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            null, null, null);
 
-        await _sut.DispatchAsync(notification, null, null, default);
+        await _sut.DispatchAsync(data, default);
 
         _repository.Verify(r => r.AddAsync(
             It.Is<NotificationEntity>(n => !string.IsNullOrEmpty(n.Title) && !string.IsNullOrEmpty(n.Message)),
@@ -67,14 +67,14 @@ public class InAppDispatcherTests
     {
         var customerId = Guid.Parse("11111111-1111-1111-1111-111111111111");
         var orderId = Guid.NewGuid();
-        var notification = new NotificationEntity
-        {
-            EventType = "order-shipped",
-            CustomerId = customerId,
-            OrderId = orderId
-        };
+        var data = new NotificationEventData(
+            "order-shipped",
+            customerId,
+            Guid.NewGuid(),
+            orderId,
+            null, null, null);
 
-        await _sut.DispatchAsync(notification, null, null, default);
+        await _sut.DispatchAsync(data, default);
 
         _clientProxy.Verify(c => c.SendCoreAsync("Notification",
             It.Is<object[]>(o => VerifyNotificationDto(o[0], customerId, "order-shipped", orderId)),

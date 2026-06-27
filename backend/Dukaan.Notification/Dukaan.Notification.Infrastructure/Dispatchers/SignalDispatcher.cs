@@ -1,5 +1,5 @@
 using Dukaan.Notification.Application.Interfaces;
-using Dukaan.Notification.Domain.Entities;
+using Dukaan.Notification.Application.Models;
 using Dukaan.Notification.Infrastructure.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
@@ -12,19 +12,19 @@ public class SignalDispatcher(
 {
     public string ChannelType => "signal";
 
-    public async Task DispatchAsync(NotificationEntity notification, string? customerEmail, string? rawData, CancellationToken ct)
+    public async Task DispatchAsync(NotificationEventData eventData, CancellationToken ct)
     {
-        if (string.IsNullOrEmpty(rawData))
+        if (string.IsNullOrEmpty(eventData.RawData))
         {
-            logger.LogWarning("Skipping signal for Customer={CustomerId}: rawData is empty", notification.CustomerId);
+            logger.LogWarning("Skipping signal for Customer={CustomerId}: rawData is empty", eventData.CustomerId);
             return;
         }
 
-        await hubContext.Clients.Group($"user-{notification.CustomerId}")
-            .SendAsync("Signal", rawData, ct);
+        await hubContext.Clients.Group($"user-{eventData.CustomerId}")
+            .SendAsync("Signal", eventData.RawData, ct);
 
         logger.LogInformation(
             "Signal pushed for Customer={CustomerId}, EventType={EventType}",
-            notification.CustomerId, notification.EventType);
+            eventData.CustomerId, eventData.EventType);
     }
 }

@@ -1,5 +1,5 @@
 using Dukaan.Notification.Application.Interfaces;
-using Dukaan.Notification.Domain.Entities;
+using Dukaan.Notification.Application.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -97,28 +97,21 @@ public class OrderEventConsumer : BackgroundService
         var tenantId = Guid.Parse(fields.GetValueOrDefault("tenant_id", Guid.Empty.ToString()));
         var orderId = fields.TryGetValue("order_id", out var oid) && Guid.TryParse(oid, out var parsedOrderId)
             ? parsedOrderId : (Guid?)null;
+        var orderDisplayId = fields.GetValueOrDefault("order_display_id");
         var customerEmail = fields.GetValueOrDefault("customer_email");
         var rawData = fields.GetValueOrDefault("data");
 
         var notificationTypes = fields.GetValueOrDefault("notification_types", "in-app")
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-        var notification = new NotificationEntity
-        {
-            Id = Guid.NewGuid(),
-            CustomerId = customerId,
-            TenantId = tenantId,
-            EventType = eventType,
-            OrderId = orderId,
-            IsRead = false,
-            CreatedAt = DateTime.UtcNow
-        };
+        var eventData = new NotificationEventData(
+            eventType, customerId, tenantId, orderId, orderDisplayId, customerEmail, rawData);
 
         _logger.LogInformation(
             "Notification received: Customer={CustomerId}, Event={EventType}",
             customerId, eventType);
 
-        await dispatchManager.DispatchAsync(notification, notificationTypes, customerEmail, rawData, ct);
+        await dispatchManager.DispatchAsync(eventData, notificationTypes, ct);
     }
 
     private async Task TrimStreamAsync(IDatabase db)

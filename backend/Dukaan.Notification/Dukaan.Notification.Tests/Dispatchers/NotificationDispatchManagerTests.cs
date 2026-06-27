@@ -1,5 +1,5 @@
 using Dukaan.Notification.Application.Interfaces;
-using Dukaan.Notification.Domain.Entities;
+using Dukaan.Notification.Application.Models;
 using Dukaan.Notification.Infrastructure.Dispatchers;
 using Microsoft.Extensions.Logging;
 
@@ -31,52 +31,40 @@ public class NotificationDispatchManagerTests
     [Fact]
     public async Task DispatchAsync_ShouldCallMatchingDispatchersOnly()
     {
-        var notification = new NotificationEntity();
+        var data = new NotificationEventData("order-placed", Guid.NewGuid(), Guid.NewGuid(), null, null, null, null);
         var channels = new[] { "in-app", "signal" };
 
-        await _sut.DispatchAsync(notification, channels, null, null, default);
+        await _sut.DispatchAsync(data, channels, default);
 
-        _inApp.Verify(d => d.DispatchAsync(notification, null, null, default), Times.Once);
-        _signal.Verify(d => d.DispatchAsync(notification, null, null, default), Times.Once);
-        _email.Verify(d => d.DispatchAsync(It.IsAny<NotificationEntity>(), null, null, default), Times.Never);
+        _inApp.Verify(d => d.DispatchAsync(data, default), Times.Once);
+        _signal.Verify(d => d.DispatchAsync(data, default), Times.Once);
+        _email.Verify(d => d.DispatchAsync(It.IsAny<NotificationEventData>(), default), Times.Never);
     }
 
     [Fact]
     public async Task DispatchAsync_ShouldSkipUnknownChannelTypes()
     {
-        var notification = new NotificationEntity();
+        var data = new NotificationEventData("order-placed", Guid.NewGuid(), Guid.NewGuid(), null, null, null, null);
         var channels = new[] { "in-app", "unknown-channel" };
 
-        await _sut.DispatchAsync(notification, channels, null, null, default);
+        await _sut.DispatchAsync(data, channels, default);
 
-        _inApp.Verify(d => d.DispatchAsync(notification, null, null, default), Times.Once);
-        _signal.Verify(d => d.DispatchAsync(It.IsAny<NotificationEntity>(), null, null, default), Times.Never);
-        _email.Verify(d => d.DispatchAsync(It.IsAny<NotificationEntity>(), null, null, default), Times.Never);
+        _inApp.Verify(d => d.DispatchAsync(data, default), Times.Once);
+        _signal.Verify(d => d.DispatchAsync(It.IsAny<NotificationEventData>(), default), Times.Never);
+        _email.Verify(d => d.DispatchAsync(It.IsAny<NotificationEventData>(), default), Times.Never);
     }
 
     [Fact]
     public async Task DispatchAsync_ShouldNotBlockOtherDispatchersWhenOneFails()
     {
-        var notification = new NotificationEntity();
+        var data = new NotificationEventData("order-placed", Guid.NewGuid(), Guid.NewGuid(), null, null, null, null);
         var channels = new[] { "in-app", "signal" };
 
-        _inApp.Setup(d => d.DispatchAsync(It.IsAny<NotificationEntity>(), null, null, default))
+        _inApp.Setup(d => d.DispatchAsync(It.IsAny<NotificationEventData>(), default))
             .ThrowsAsync(new InvalidOperationException("failure"));
 
-        await _sut.DispatchAsync(notification, channels, null, null, default);
+        await _sut.DispatchAsync(data, channels, default);
 
-        _signal.Verify(d => d.DispatchAsync(notification, null, null, default), Times.Once);
-    }
-
-    [Fact]
-    public async Task DispatchAsync_ShouldPassRawDataToDispatchers()
-    {
-        var notification = new NotificationEntity();
-        var channels = new[] { "in-app" };
-        var rawData = "{\"key\":\"value\"}";
-
-        await _sut.DispatchAsync(notification, channels, "test@email.com", rawData, default);
-
-        _inApp.Verify(d => d.DispatchAsync(notification, "test@email.com", rawData, default), Times.Once);
+        _signal.Verify(d => d.DispatchAsync(data, default), Times.Once);
     }
 }

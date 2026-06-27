@@ -1,5 +1,5 @@
 using Dukaan.Notification.Application.Interfaces;
-using Dukaan.Notification.Domain.Entities;
+using Dukaan.Notification.Application.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Dukaan.Notification.Infrastructure.Dispatchers;
@@ -9,10 +9,8 @@ public class NotificationDispatchManager(
     ILogger<NotificationDispatchManager> logger) : INotificationDispatchManager
 {
     public async Task DispatchAsync(
-        NotificationEntity notification,
+        NotificationEventData eventData,
         IReadOnlyCollection<string> channels,
-        string? customerEmail,
-        string? rawData,
         CancellationToken ct)
     {
         var targetDispatchers = dispatchers.Where(d => channels.Contains(d.ChannelType));
@@ -21,13 +19,13 @@ public class NotificationDispatchManager(
         {
             try
             {
-                await dispatcher.DispatchAsync(notification, customerEmail, rawData, ct);
+                await dispatcher.DispatchAsync(eventData, ct);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex,
-                    "Dispatcher {ChannelType} failed for NotificationId={NotificationId}",
-                    dispatcher.ChannelType, notification.Id);
+                    "Dispatcher {ChannelType} failed for Customer={CustomerId}, Event={EventType}",
+                    dispatcher.ChannelType, eventData.CustomerId, eventData.EventType);
             }
         }
     }

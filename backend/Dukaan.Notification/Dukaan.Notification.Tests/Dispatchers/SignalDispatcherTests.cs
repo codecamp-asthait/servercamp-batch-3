@@ -1,4 +1,4 @@
-using Dukaan.Notification.Domain.Entities;
+using Dukaan.Notification.Application.Models;
 using Dukaan.Notification.Infrastructure.Dispatchers;
 using Dukaan.Notification.Infrastructure.Hubs;
 using Microsoft.AspNetCore.SignalR;
@@ -31,27 +31,33 @@ public class SignalDispatcherTests
     [Fact]
     public async Task DispatchAsync_ShouldSendSignalEventWithRawData()
     {
-        var notification = new NotificationEntity
-        {
-            CustomerId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            EventType = "order-shipped"
-        };
-        var rawData = "{\"status\":\"shipped\"}";
+        var data = new NotificationEventData(
+            "order-shipped",
+            Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            Guid.NewGuid(),
+            null, null, null,
+            "{\"status\":\"shipped\"}");
 
-        await _sut.DispatchAsync(notification, null, rawData, default);
+        await _sut.DispatchAsync(data, default);
 
         _clientProxy.Verify(
-            c => c.SendCoreAsync("Signal", It.Is<object[]>(o => o[0].ToString() == rawData), default),
+            c => c.SendCoreAsync("Signal", It.Is<object[]>(o => o[0].ToString() == "{\"status\":\"shipped\"}"), default),
             Times.Once);
     }
 
     [Fact]
     public async Task DispatchAsync_ShouldSkipWhenRawDataIsEmpty()
     {
-        var notification = new NotificationEntity();
+        var data = new NotificationEventData(
+            "order-shipped",
+            Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            Guid.NewGuid(),
+            null, null, null, null);
 
-        await _sut.DispatchAsync(notification, null, null, default);
-        await _sut.DispatchAsync(notification, null, string.Empty, default);
+        await _sut.DispatchAsync(data, default);
+
+        var emptyData = data with { RawData = string.Empty };
+        await _sut.DispatchAsync(emptyData, default);
 
         _clientProxy.Verify(
             c => c.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()),

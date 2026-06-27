@@ -1,10 +1,13 @@
 using Dukaan.Notification.Application.Interfaces;
+using Dukaan.Notification.Application.Models;
 using Dukaan.Notification.Domain.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Dukaan.Notification.Infrastructure.Dispatchers;
 
 public class EmailDispatcher(
+    IServiceScopeFactory scopeFactory,
     IEmailService emailService,
     ILogger<EmailDispatcher> logger) : INotificationDispatcher
 {
@@ -19,33 +22,51 @@ public class EmailDispatcher(
         ["order-cancelled"] = ("Order #{0} Cancelled", "Your order #{0} has been cancelled."),
     };
 
-    public async Task DispatchAsync(NotificationEntity notification, string? customerEmail, string? rawData, CancellationToken ct)
+    public async Task DispatchAsync(NotificationEventData eventData, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(customerEmail))
+        if (string.IsNullOrWhiteSpace(eventData.CustomerEmail))
         {
-            logger.LogWarning("Skipping email for NotificationId={NotificationId}: customer email is empty", notification.Id);
+            logger.LogWarning("Skipping email for Customer={CustomerId}: customer email is empty", eventData.CustomerId);
             return;
         }
 
-        var orderDisplayId = notification.OrderId?.ToString("N")[..8] ?? "N/A";
+        var notification = new NotificationEntity
+        {
+            Id = Guid.NewGuid(),
+            CustomerId = eventData.CustomerId,
+            TenantId = eventData.TenantId,
+            EventType = eventData.EventType,
+            OrderId = eventData.OrderId,
+            Title = string.Empty,
+            Message = string.Empty,
+            IsRead = false,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        using var scope = scopeFactory.CreateScope();
+        var repository = scope.ServiceProvider.GetRequiredService<IRepository<NotificationEntity>>();
+        await repository.AddAsync(notification, ct);
+        await repository.SaveChangesAsync(ct);
+
+        var orderDisplayId = eventData.OrderDisplayId ?? eventData.OrderId?.ToString("N")[..8] ?? "N/A";
 
         string subject, bodyText;
-        if (EmailTemplates.TryGetValue(notification.EventType, out var template))
+        if (EmailTemplates.TryGetValue(eventData.EventType, out var template))
         {
             subject = string.Format(template.Subject, orderDisplayId);
             bodyText = string.Format(template.BodyTemplate, orderDisplayId);
         }
         else
         {
-            subject = $"Order {notification.EventType}";
-            bodyText = $"Your order has been updated (event: {notification.EventType}).";
+            subject = $"Order {eventData.EventType}";
+            bodyText = $"Your order has been updated (event: {eventData.EventType}).";
         }
 
         var htmlBody = BuildHtmlEmail(subject, bodyText);
-        await emailService.SendEmailAsync(customerEmail, subject, htmlBody, ct);
+        await emailService.SendEmailAsync(eventData.CustomerEmail, subject, htmlBody, ct);
 
         logger.LogInformation("Email sent to {Email} for NotificationId={NotificationId}, EventType={EventType}",
-            customerEmail, notification.Id, notification.EventType);
+            eventData.CustomerEmail, notification.Id, eventData.EventType);
     }
 
     private static string BuildHtmlEmail(string subject, string bodyText)
