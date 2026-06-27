@@ -22,8 +22,6 @@ public class NotificationDbContext(DbContextOptions<NotificationDbContext> optio
             entity.HasIndex(e => new { e.CustomerId, e.TenantId, e.IsRead, e.CreatedAt })
                   .IsDescending(false, false, false, true);
             entity.Property(e => e.EventType).HasMaxLength(100).IsRequired();
-            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
-            entity.Property(e => e.Message).HasMaxLength(2000).IsRequired();
         });
 
         base.OnModelCreating(modelBuilder);
