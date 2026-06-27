@@ -39,3 +39,36 @@ export function useCustomerAddresses(slug: string, token: string) {
     enabled: !!token,
   });
 }
+
+export function useCreateAddress(slug: string, token: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: import("./types").CreateAddressData) => ordersApi.createAddress(slug, token, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: addressesKey(slug) }),
+  });
+}
+
+export function useUpdateAddress(slug: string, token: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: import("./types").UpdateAddressData }) =>
+      ordersApi.updateAddress(slug, token, id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: addressesKey(slug) }),
+  });
+}
+
+export function useDeleteAddress(slug: string, token: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => ordersApi.deleteAddress(slug, token, id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: addressesKey(slug) }),
+  });
+}
+
+export function useSetDefaultAddress(slug: string, token: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => ordersApi.setDefaultAddress(slug, token, id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: addressesKey(slug) }),
+  });
+}

@@ -47,6 +47,26 @@ export interface OrderSummaryDto {
   createdAt: string;
 }
 
+export interface CreateAddressData {
+  label: string;
+  type: "Billing" | "Delivery";
+  street: string;
+  city: string;
+  district: string;
+  postalCode: string;
+  phone: string;
+  isDefault: boolean;
+}
+
+export interface UpdateAddressData {
+  label: string;
+  street: string;
+  city: string;
+  district: string;
+  postalCode: string;
+  phone: string;
+}
+
 export interface PlaceOrderRequest {
   billingAddressId: string;
   deliveryAddressId: string;
