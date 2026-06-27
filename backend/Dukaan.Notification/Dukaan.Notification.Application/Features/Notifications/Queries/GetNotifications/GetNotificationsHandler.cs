@@ -1,6 +1,7 @@
 using Dukaan.Notification.Application.Core.Abstractions;
 using Dukaan.Notification.Application.Features.Notifications.Dtos;
 using Dukaan.Notification.Application.Interfaces;
+using Dukaan.Notification.Domain.Enums;
 using ErrorOr;
 using NotificationEntity = Dukaan.Notification.Domain.Entities.NotificationEntity;
 
@@ -14,7 +15,7 @@ public class GetNotificationsHandler(
         GetNotificationsQuery query, CancellationToken cancellationToken)
     {
         var notifications = await notificationRepository.FindAsync(
-            n => !query.UnreadOnly || !n.IsRead,
+            n => n.ChannelType == NotificationChannelType.InApp && (!query.UnreadOnly || !n.IsRead),
             cancellationToken: cancellationToken);
 
         var ordered = notifications
