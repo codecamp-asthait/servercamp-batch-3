@@ -45,11 +45,11 @@ export function ProductCard({ product }: { product: StorefrontProduct }) {
       href={`/store/${slug}/products/${product.id}`}
       className="flex flex-col rounded-xl border border-zinc-200 bg-white overflow-hidden hover:shadow-md transition-shadow"
     >
-      {getMediaUrl(product.imageUrl) ? (
-        <img src={getMediaUrl(product.imageUrl, "thumbnail")!} alt={product.name} className="h-48 w-full object-cover" />
-      ) : (
-        <div className="h-48 w-full bg-zinc-100" />
-      )}
+      <div className="aspect-[4/3] w-full overflow-hidden bg-zinc-100">
+        {getMediaUrl(product.imageUrl) ? (
+          <img src={getMediaUrl(product.imageUrl, "thumbnail")!} alt={product.name} className="h-full w-full object-cover" />
+        ) : null}
+      </div>
       <div className="flex flex-col gap-1 p-3">
         <p className="text-sm font-medium text-zinc-800 line-clamp-2">{product.name}</p>
         <div className="flex items-center justify-between gap-2 mt-1">
