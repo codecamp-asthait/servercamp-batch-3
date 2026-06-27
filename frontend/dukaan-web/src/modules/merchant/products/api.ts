@@ -4,6 +4,7 @@ import type {
   Product,
   PagedResponse,
   CreateProductRequest,
+  UpdateProductRequest,
   InitiateUploadResponse,
   CompleteUploadResponse,
 } from "./types";
@@ -22,11 +23,27 @@ export const productsApi = {
       { headers: authHeaders() }
     ),
 
+  getById: (id: string) =>
+    http<Product>(`/api/products/${id}`, { headers: authHeaders() }),
+
   create: (data: CreateProductRequest) =>
     http<Product>("/api/products", {
       method: "POST",
       headers: authHeaders(),
       body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: UpdateProductRequest) =>
+    http<unknown>(`/api/products/${id}`, {
+      method: "PUT",
+      headers: authHeaders(),
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    http<unknown>(`/api/products/${id}`, {
+      method: "DELETE",
+      headers: authHeaders(),
     }),
 };
 

@@ -1,14 +1,16 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { MultiSelect } from "@/components/multi-select";
 import { RichTextEditor } from "@/components/rich-text-editor";
-import { useCreateProduct } from "@/modules/merchant/products/hooks";
+import { useCreateProduct, useUpdateProduct } from "@/modules/merchant/products/hooks";
 import { useCategoriesDropdown } from "@/modules/merchant/categories/hooks";
 import { mediaApi } from "@/modules/merchant/products/api";
+import type { Product } from "@/modules/merchant/products/types";
 
 interface ProductFormProps {
+  product?: Product;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -45,19 +47,34 @@ async function uploadFile(
   return mediaId;
 }
 
-export function ProductForm({ onSuccess, onCancel }: ProductFormProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [stockQuantity, setStockQuantity] = useState("");
-  const [categoryIds, setCategoryIds] = useState<string[]>([]);
+export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) {
+  const isEditing = !!product;
+
+  const [name, setName] = useState(product?.name ?? "");
+  const [description, setDescription] = useState(product?.description ?? "");
+  const [price, setPrice] = useState(product?.price.toString() ?? "");
+  const [stockQuantity, setStockQuantity] = useState(product?.stockQuantity.toString() ?? "");
+  const [isActive, setIsActive] = useState(product?.isActive ?? true);
+  const [categoryIds, setCategoryIds] = useState<string[]>(product?.categoryIds ?? []);
   const [mediaId, setMediaId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: categories = [] } = useCategoriesDropdown();
-  const { mutate: createProduct, isPending, error } = useCreateProduct(onSuccess);
+  const { mutate: createProduct, isPending: isCreating, error: createError } = useCreateProduct(onSuccess);
+  const { mutate: updateProduct, isPending: isUpdating, error: updateError } = useUpdateProduct(onSuccess);
+
+  useEffect(() => {
+    if (product) {
+      setName(product.name);
+      setDescription(product.description ?? "");
+      setPrice(product.price.toString());
+      setStockQuantity(product.stockQuantity.toString());
+      setIsActive(product.isActive);
+      setCategoryIds(product.categoryIds);
+    }
+  }, [product]);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -76,16 +93,32 @@ export function ProductForm({ onSuccess, onCancel }: ProductFormProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    createProduct({
-      name,
-      description: description || null,
-      price: parseFloat(price),
-      pendingMediaId: mediaId,
-      stockQuantity: parseInt(stockQuantity),
-      categoryIds,
-    });
+    if (isEditing && product) {
+      updateProduct({
+        id: product.id,
+        data: {
+          name,
+          description: description || null,
+          price: parseFloat(price),
+          pendingMediaId: mediaId,
+          stockQuantity: parseInt(stockQuantity),
+          isActive,
+        },
+      });
+    } else {
+      createProduct({
+        name,
+        description: description || null,
+        price: parseFloat(price),
+        pendingMediaId: mediaId,
+        stockQuantity: parseInt(stockQuantity),
+        categoryIds,
+      });
+    }
   }
 
+  const error = createError ?? updateError;
+  const isPending = isCreating || isUpdating;
   const categoryOptions = categories.map((c) => ({ value: c.id, label: c.name }));
 
   return (
@@ -127,14 +160,30 @@ export function ProductForm({ onSuccess, onCancel }: ProductFormProps) {
           />
         </Field>
 
-        <Field label="Categories">
-          <MultiSelect
-            options={categoryOptions}
-            value={categoryIds}
-            onChange={setCategoryIds}
-            placeholder="Select categories"
-          />
-        </Field>
+        {isEditing && (
+          <Field label="Status">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isActive}
+                onChange={(e) => setIsActive(e.target.checked)}
+                className="rounded border-zinc-300"
+              />
+              <span className="text-sm text-zinc-600">Product is active</span>
+            </label>
+          </Field>
+        )}
+
+        {!isEditing && (
+          <Field label="Categories">
+            <MultiSelect
+              options={categoryOptions}
+              value={categoryIds}
+              onChange={setCategoryIds}
+              placeholder="Select categories"
+            />
+          </Field>
+        )}
 
         <Field label="Image">
           <input
@@ -171,7 +220,7 @@ export function ProductForm({ onSuccess, onCancel }: ProductFormProps) {
           Cancel
         </Button>
         <Button type="submit" disabled={isPending || (uploadProgress !== null && uploadProgress < 100)} className="bg-zinc-900 text-white hover:bg-zinc-700">
-          {isPending ? "Adding…" : "Add product"}
+          {isPending ? "Saving…" : isEditing ? "Save changes" : "Add product"}
         </Button>
       </div>
     </form>
